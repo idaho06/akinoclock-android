@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <org.akinosoft.akinoclock.calendar.ui.MonthGridView
+        android:id="@+id/monthGridView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2" />
+
+    <org.akinosoft.akinoclock.calendar.ui.TodayEventsView
+        android:id="@+id/todayEventsView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/grantAccessButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/calendar_grant_access"
+        android:visibility="gone" />
+
+</merge>

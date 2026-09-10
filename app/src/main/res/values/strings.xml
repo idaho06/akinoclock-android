@@ -2,4 +2,7 @@
 <resources>
     <string name="app_name">AkinoClock</string>
     <string name="calendar_no_title">(No title)</string>
+    <string name="calendar_all_day">all day</string>
+    <string name="calendar_no_events_today">No events today</string>
+    <string name="calendar_grant_access">Grant calendar access</string>
 </resources>

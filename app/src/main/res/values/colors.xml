@@ -11,4 +11,9 @@
     <color name="center_cap_ring">#F4F4F2</color>
 
     <color name="background">#F4F4F2</color>
+
+    <!-- Calendar: reuses the dial's existing accent colors rather than introducing new ones. -->
+    <color name="calendar_today">@color/hand_tip</color>
+    <color name="calendar_accent">@color/second_hand</color>
+    <color name="calendar_dim">@color/tick_minute</color>
 </resources>
