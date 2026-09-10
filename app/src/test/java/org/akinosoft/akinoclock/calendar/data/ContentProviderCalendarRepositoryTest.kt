@@ -32,10 +32,11 @@ class ContentProviderCalendarRepositoryTest {
 
     private lateinit var context: Context
     private lateinit var repository: ContentProviderCalendarRepository
-    private val previousDefaultZone: TimeZone = TimeZone.getDefault()
+    private lateinit var previousDefaultZone: TimeZone
 
     @Before
     fun setUp() {
+        previousDefaultZone = TimeZone.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Madrid"))
         context = ApplicationProvider.getApplicationContext()
         Robolectric.setupContentProvider(FakeCalendarProvider::class.java, "com.android.calendar")
