@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Placeholders; phase 02 fills in the BC12 dark palette -->
-    <color name="background">#000000</color>
+    <!-- Braun BC12 "BC12B" dark palette (default) -->
+    <color name="dial_background">#101010</color>
+    <color name="bezel_ring">#2A2A2A</color>
+    <color name="numeral">#EDEDED</color>
+    <color name="tick_minute">#8A8A8A</color>
+    <color name="hand_baton">#EDEDED</color>
+    <color name="hand_tip">#C9E6C0</color>
+    <color name="second_hand">#F5C400</color>
+    <color name="center_cap_ring">#101010</color>
+
+    <color name="background">#101010</color>
     <color name="on_background">#FFFFFF</color>
 </resources>
