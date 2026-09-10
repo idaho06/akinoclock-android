@@ -145,6 +145,20 @@ class ClockViewTest {
     }
 
     @Test
+    fun `content description reflects the injected clock even when its minute matches the real wall clock`() {
+        // The `clock` field defaults to Clock.systemDefaultZone() before the secondary
+        // constructor installs the injected clock, so a naive minute-change guard on the
+        // content description could keep the real-time string if the real minute happens
+        // to match the injected clock's minute at construction time.
+        val realNow = java.time.LocalTime.now()
+        val collidingHour = (realNow.hour + 3) % 24
+        val view = TestableClockView(context(), fixedClock(collidingHour, realNow.minute, 0), FakeTickScheduler())
+
+        val expected = String.format("%02d:%02d", collidingHour, realNow.minute)
+        assertEquals(expected, view.contentDescription)
+    }
+
+    @Test
     fun `timezone change broadcast updates time while attached, not after detach`() {
         val fake = FakeTickScheduler()
         val clock = mutableClock(8, 0, 0)

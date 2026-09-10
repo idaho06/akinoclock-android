@@ -27,7 +27,13 @@ open class ClockView @JvmOverloads constructor(
     var clock: Clock = Clock.systemDefaultZone()
         set(value) {
             field = value
-            applyTime(readTime())
+            time = readTime()
+            // Always refresh, unguarded: the new clock's minute may coincidentally match
+            // whatever `lastDescriptionMinute` was left at (e.g. the real wall-clock minute
+            // at construction, before an injected clock replaces the systemDefaultZone()
+            // default) — the minute-unchanged guard in updateContentDescription() is only
+            // valid for same-clock ticks, not a clock swap.
+            setContentDescriptionFromTime()
         }
 
     var tickScheduler: TickScheduler = HandlerTickScheduler(Handler(Looper.getMainLooper()))
@@ -65,9 +71,13 @@ open class ClockView @JvmOverloads constructor(
 
     private fun updateContentDescription() {
         if (time.minute != lastDescriptionMinute) {
-            lastDescriptionMinute = time.minute
-            contentDescription = LocalTime.of(time.hour, time.minute).format(DESCRIPTION_FORMATTER)
+            setContentDescriptionFromTime()
         }
+    }
+
+    private fun setContentDescriptionFromTime() {
+        lastDescriptionMinute = time.minute
+        contentDescription = LocalTime.of(time.hour, time.minute).format(DESCRIPTION_FORMATTER)
     }
 
     private var dialBitmap: Bitmap? = null
