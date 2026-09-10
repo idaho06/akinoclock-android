@@ -14,6 +14,8 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import org.akinosoft.akinoclock.util.FakePeriodicScheduler
+import org.akinosoft.akinoclock.util.PeriodicScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -39,7 +41,7 @@ private class MutableClock(
 private class TestableClockView(
     context: Context,
     clock: Clock,
-    tickScheduler: TickScheduler,
+    tickScheduler: PeriodicScheduler,
 ) : ClockView(context, clock, tickScheduler) {
     var invalidateCount = 0
         private set
@@ -71,13 +73,13 @@ class ClockViewTest {
 
     @Test
     fun `constructing with a fixed clock sets time from that clock`() {
-        val view = TestableClockView(context(), fixedClock(9, 45, 30), FakeTickScheduler())
+        val view = TestableClockView(context(), fixedClock(9, 45, 30), FakePeriodicScheduler())
         assertEquals(ClockTime(9, 45, 30), view.time)
     }
 
     @Test
     fun `attaching to window starts the scheduler, detaching stops it`() {
-        val fake = FakeTickScheduler()
+        val fake = FakePeriodicScheduler()
         val view = TestableClockView(context(), fixedClock(0, 0, 0), fake)
         val controller = attachToActivity(view)
         assertTrue(fake.isRunning)
@@ -88,7 +90,7 @@ class ClockViewTest {
 
     @Test
     fun `tick advances time and invalidates`() {
-        val fake = FakeTickScheduler()
+        val fake = FakePeriodicScheduler()
         val clock = mutableClock(10, 0, 0)
         val view = TestableClockView(context(), clock, fake)
         view.start()
@@ -102,7 +104,7 @@ class ClockViewTest {
 
     @Test
     fun `dial renders background color and yellow second hand`() {
-        val view = TestableClockView(context(), fixedClock(12, 0, 15), FakeTickScheduler())
+        val view = TestableClockView(context(), fixedClock(12, 0, 15), FakePeriodicScheduler())
         view.layout(0, 0, 200, 200)
 
         val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
@@ -126,7 +128,7 @@ class ClockViewTest {
 
     @Test
     fun `visibility GONE stops ticking, VISIBLE restarts it`() {
-        val fake = FakeTickScheduler()
+        val fake = FakePeriodicScheduler()
         val view = TestableClockView(context(), fixedClock(0, 0, 0), fake)
         attachToActivity(view)
         assertTrue(fake.isRunning)
@@ -140,7 +142,7 @@ class ClockViewTest {
 
     @Test
     fun `content description reflects HH mm`() {
-        val view = TestableClockView(context(), fixedClock(12, 34, 56), FakeTickScheduler())
+        val view = TestableClockView(context(), fixedClock(12, 34, 56), FakePeriodicScheduler())
         assertEquals("12:34", view.contentDescription)
     }
 
@@ -152,7 +154,7 @@ class ClockViewTest {
         // to match the injected clock's minute at construction time.
         val realNow = java.time.LocalTime.now()
         val collidingHour = (realNow.hour + 3) % 24
-        val view = TestableClockView(context(), fixedClock(collidingHour, realNow.minute, 0), FakeTickScheduler())
+        val view = TestableClockView(context(), fixedClock(collidingHour, realNow.minute, 0), FakePeriodicScheduler())
 
         val expected = String.format("%02d:%02d", collidingHour, realNow.minute)
         assertEquals(expected, view.contentDescription)
@@ -160,7 +162,7 @@ class ClockViewTest {
 
     @Test
     fun `timezone change broadcast updates time while attached, not after detach`() {
-        val fake = FakeTickScheduler()
+        val fake = FakePeriodicScheduler()
         val clock = mutableClock(8, 0, 0)
         val view = TestableClockView(context(), clock, fake)
         val controller = attachToActivity(view)

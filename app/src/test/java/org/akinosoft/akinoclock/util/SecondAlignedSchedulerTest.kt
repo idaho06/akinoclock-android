@@ -1,60 +1,25 @@
-package org.akinosoft.akinoclock.clock
+package org.akinosoft.akinoclock.util
 
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 
 @RunWith(RobolectricTestRunner::class)
-class TickSchedulerTest {
+class SecondAlignedSchedulerTest {
 
-    private fun newScheduler(): HandlerTickScheduler =
-        HandlerTickScheduler(Handler(Looper.getMainLooper()), nowMillis = { SystemClock.uptimeMillis() })
-
-    // --- FakeTickScheduler ---
-
-    @Test
-    fun `fake records start and stop calls`() {
-        val fake = FakeTickScheduler()
-        assertFalse(fake.isRunning)
-
-        fake.start {}
-        assertTrue(fake.isRunning)
-        assertEquals(1, fake.startCount)
-
-        fake.stop()
-        assertFalse(fake.isRunning)
-        assertEquals(1, fake.stopCount)
-    }
-
-    @Test
-    fun `fake fires ticks only while running`() {
-        val fake = FakeTickScheduler()
-        var ticks = 0
-        fake.start { ticks++ }
-
-        fake.fireTick()
-        fake.fireTick()
-        assertEquals(2, ticks)
-
-        fake.stop()
-        fake.fireTick()
-        assertEquals(2, ticks)
-    }
-
-    // --- HandlerTickScheduler ---
+    private fun newScheduler(): SecondAlignedScheduler =
+        SecondAlignedScheduler(Handler(Looper.getMainLooper()), nowMillis = { SystemClock.uptimeMillis() })
 
     @Test
     fun `delay to next second boundary`() {
         val handler = Handler(Looper.getMainLooper())
-        val scheduler = HandlerTickScheduler(handler, nowMillis = { 12_345L })
+        val scheduler = SecondAlignedScheduler(handler, nowMillis = { 12_345L })
         assertEquals(655L, scheduler.delayToNextSecondMillis())
     }
 

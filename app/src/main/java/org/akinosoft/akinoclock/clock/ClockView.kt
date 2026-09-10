@@ -14,6 +14,8 @@ import android.view.View
 import java.time.Clock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import org.akinosoft.akinoclock.util.PeriodicScheduler
+import org.akinosoft.akinoclock.util.SecondAlignedScheduler
 
 /**
  * Braun BC12-style analog clock: a cached dial (background, bezel, ticks, numerals) drawn once
@@ -36,7 +38,7 @@ open class ClockView @JvmOverloads constructor(
             setContentDescriptionFromTime()
         }
 
-    var tickScheduler: TickScheduler = HandlerTickScheduler(Handler(Looper.getMainLooper()))
+    var tickScheduler: PeriodicScheduler = SecondAlignedScheduler(Handler(Looper.getMainLooper()))
 
     var palette: DialPalette = DialPalette.fromResources(context)
         set(value) {
@@ -54,7 +56,7 @@ open class ClockView @JvmOverloads constructor(
         updateContentDescription()
     }
 
-    constructor(context: Context, clock: Clock, tickScheduler: TickScheduler) : this(context) {
+    constructor(context: Context, clock: Clock, tickScheduler: PeriodicScheduler) : this(context) {
         this.tickScheduler = tickScheduler
         this.clock = clock
     }

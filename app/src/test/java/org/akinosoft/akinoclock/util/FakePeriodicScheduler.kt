@@ -1,6 +1,6 @@
-package org.akinosoft.akinoclock.clock
+package org.akinosoft.akinoclock.util
 
-class FakeTickScheduler : TickScheduler {
+class FakePeriodicScheduler : PeriodicScheduler {
 
     var startCount = 0
         private set
