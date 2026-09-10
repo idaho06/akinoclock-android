@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>HTML Feed</title>
+    <item>
+      <title><![CDATA[<b>Bold</b> &amp; <i>Italic</i>   title]]></title>
+      <link>https://example.com/html-1</link>
+      <pubDate>Thu, 10 Sep 2026 08:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

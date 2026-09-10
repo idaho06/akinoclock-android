@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example Atom Feed</title>
+  <entry>
+    <title>Atom entry with alternate and self links</title>
+    <link rel="self" href="https://example.com/atom/1/self"/>
+    <link rel="alternate" href="https://example.com/atom/1"/>
+    <updated>2026-09-10T08:00:00Z</updated>
+  </entry>
+  <entry>
+    <title>Atom entry with no rel attribute</title>
+    <link href="https://example.com/atom/2"/>
+    <published>2026-09-10T09:00:00Z</published>
+  </entry>
+  <entry>
+    <title>Atom entry with no link</title>
+    <updated>2026-09-10T10:00:00Z</updated>
+  </entry>
+</feed>
