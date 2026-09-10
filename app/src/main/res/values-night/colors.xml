@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Placeholders; phase 02 fills in the BC12 dark palette -->
+    <color name="background">#000000</color>
+    <color name="on_background">#FFFFFF</color>
+</resources>

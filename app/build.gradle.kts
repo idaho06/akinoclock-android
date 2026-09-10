@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "org.akinosoft.akinoclock"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "org.akinosoft.akinoclock"
