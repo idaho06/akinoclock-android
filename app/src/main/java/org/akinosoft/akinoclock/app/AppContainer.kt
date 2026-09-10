@@ -24,10 +24,15 @@ class AppContainer(private val context: Context) {
     val permissionChecker: PermissionChecker = ContextPermissionChecker(context)
     val calendarPrefs: CalendarPrefs = SharedPreferencesCalendarPrefs(context)
 
-    // Placeholder until phase 05 adds a settings-backed feed list: the user hasn't picked real
-    // feeds yet, so this ships a single well-known, stable public feed rather than an empty list.
+    // Temporary until phase 05 adds a settings-backed feed list.
     val defaultFeeds: List<FeedConfig> = listOf(
         FeedConfig(url = "https://feeds.bbci.co.uk/news/world/rss.xml", title = "BBC World"),
+        FeedConfig(
+            url = "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/ultimas-noticias/portada",
+            title = "El País",
+        ),
+        FeedConfig(url = "https://feeds.arstechnica.com/arstechnica/index", title = "Ars Technica"),
+        FeedConfig(url = "https://www.phoronix.com/rss.php", title = "Phoronix"),
     )
 
     private val feedFetcher = HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}")
