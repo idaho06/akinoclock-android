@@ -2,31 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="horizontal">
+
+    <org.akinosoft.akinoclock.clock.ClockView
+        android:id="@+id/clockView"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="horizontal">
-
-        <org.akinosoft.akinoclock.clock.ClockView
-            android:id="@+id/clockView"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
+        android:orientation="vertical">
 
         <org.akinosoft.akinoclock.calendar.ui.CalendarPanelView
             android:id="@+id/calendarPanel"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1" />
 
-    </LinearLayout>
+        <org.akinosoft.akinoclock.rss.ui.HeadlineCarouselView
+            android:id="@+id/rssCarousel"
+            android:layout_width="match_parent"
+            android:layout_height="72dp" />
 
-    <org.akinosoft.akinoclock.rss.ui.HeadlineCarouselView
-        android:id="@+id/rssCarousel"
-        android:layout_width="match_parent"
-        android:layout_height="72dp" />
+    </LinearLayout>
 
 </LinearLayout>
