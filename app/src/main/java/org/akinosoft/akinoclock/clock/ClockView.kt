@@ -168,7 +168,11 @@ open class ClockView @JvmOverloads constructor(
 
         tickPaint.color = palette.tickMinute
         tickPaint.strokeWidth = 0.012f * radius
-        canvas.drawLines(toAbsoluteTickLines(radius), tickPaint)
+        canvas.drawLines(toAbsolute(ClockGeometry.minorTickLines(radius)), tickPaint)
+
+        tickPaint.color = palette.numeral
+        tickPaint.strokeWidth = 0.02f * radius
+        canvas.drawLines(toAbsolute(ClockGeometry.hourTickLines(radius)), tickPaint)
 
         numeralPaint.color = palette.numeral
         numeralPaint.textSize = 0.16f * radius
@@ -182,8 +186,7 @@ open class ClockView @JvmOverloads constructor(
         return bitmap
     }
 
-    private fun toAbsoluteTickLines(r: Float): FloatArray {
-        val lines = ClockGeometry.minorTickLines(r)
+    private fun toAbsolute(lines: FloatArray): FloatArray {
         val absolute = FloatArray(lines.size)
         for (i in lines.indices step 2) {
             absolute[i] = lines[i] + centerX
@@ -210,7 +213,7 @@ open class ClockView @JvmOverloads constructor(
         drawHandLine(canvas, rect.tailY, rect.tipY, rect.width, handBatonPaint, palette.handBaton)
 
         val tip = ClockGeometry.tipSegment(kind, radius)
-        drawHandLine(canvas, tip.startY, tip.endY, rect.width, handTipPaint, palette.handTip)
+        drawHandLine(canvas, tip.startY, tip.endY, tip.width, handTipPaint, palette.handTip)
 
         canvas.restore()
     }

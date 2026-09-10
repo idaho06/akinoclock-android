@@ -13,4 +13,14 @@ class MainActivity : ComponentActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
     }
+
+    override fun onResume() {
+        super.onResume()
+        binding.clockView.start()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        binding.clockView.stop()
+    }
 }

@@ -22,9 +22,36 @@ class ClockGeometryTest {
     }
 
     @Test
-    fun `tickLine at hour-aligned index throws`() {
-        assertThrows(IllegalArgumentException::class.java) { ClockGeometry.tickLine(0, r) }
-        assertThrows(IllegalArgumentException::class.java) { ClockGeometry.tickLine(5, r) }
+    fun `hourTickIndices are the 12 multiples of 5`() {
+        val indices = ClockGeometry.hourTickIndices()
+        assertEquals(12, indices.size)
+        assertTrue(0 in indices)
+        assertTrue(55 in indices)
+        assertTrue(indices.all { it % 5 == 0 })
+    }
+
+    @Test
+    fun `tickLine at an hour-aligned index is longer than a minor tick`() {
+        val line = ClockGeometry.tickLine(0, r)
+        assertEquals(0f, line.outer.x, 0.01f)
+        assertEquals(-95f, line.outer.y, 0.01f)
+        assertEquals(0f, line.inner.x, 0.01f)
+        assertEquals(-85f, line.inner.y, 0.01f)
+    }
+
+    @Test
+    fun `tickLine at index 5 (1 o'clock hour position)`() {
+        val line = ClockGeometry.tickLine(5, r)
+        assertEquals(47.5f, line.outer.x, 0.01f)
+        assertEquals(-82.27f, line.outer.y, 0.01f)
+        assertEquals(42.5f, line.inner.x, 0.01f)
+        assertEquals(-73.61f, line.inner.y, 0.01f)
+    }
+
+    @Test
+    fun `hourTickLines produces a flat array of 12 ticks`() {
+        val lines = ClockGeometry.hourTickLines(r)
+        assertEquals(12 * 4, lines.size)
     }
 
     @Test
@@ -102,17 +129,19 @@ class ClockGeometryTest {
     }
 
     @Test
-    fun `tipSegment for hour hand covers last 18 units`() {
+    fun `tipSegment for hour hand has a margin on both ends and is thinner than the baton`() {
         val tip = ClockGeometry.tipSegment(HandKind.HOUR, r)
-        assertEquals(-50f, tip.startY, 0.01f)
-        assertEquals(-32f, tip.endY, 0.01f)
+        assertEquals(-47f, tip.startY, 0.01f)
+        assertEquals(-35f, tip.endY, 0.01f)
+        assertEquals(3.6f, tip.width, 0.01f)
     }
 
     @Test
-    fun `tipSegment for minute hand covers last 22 units`() {
+    fun `tipSegment for minute hand has a margin on both ends and is thinner than the baton`() {
         val tip = ClockGeometry.tipSegment(HandKind.MINUTE, r)
-        assertEquals(-74f, tip.startY, 0.01f)
-        assertEquals(-52f, tip.endY, 0.01f)
+        assertEquals(-71f, tip.startY, 0.01f)
+        assertEquals(-55f, tip.endY, 0.01f)
+        assertEquals(3f, tip.width, 0.01f)
     }
 
     @Test
