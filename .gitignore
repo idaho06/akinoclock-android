@@ -1,0 +1,42 @@
+# Android / Gradle
+*.iml
+.gradle/
+.idea/
+.kotlin/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing
+keystore.properties
+*.jks
+*.keystore
+
+# Editors / IDEs
+.vscode/
+*.iws
+*.ipr
+
+# AI tooling (Claude, Serena, Context7) and other external-to-project state
+.claude/
+.claude-plugin/
+.serena/
+.context7/
+.mcp.json
+CLAUDE.local.md
+
+# Planning docs (internal working notes, not part of the shipped project)
+plans/
+
+# Secrets / env
+.env
+.env.*
+*.pem
+*.p12
+secrets/
+credentials*.json
+
+# OS
+.DS_Store
