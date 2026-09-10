@@ -67,6 +67,22 @@ class HeadlineCarouselViewTest {
     }
 
     @Test
+    fun `setHeadlines with an unchanged list is a no-op, not resetting the rotation`() {
+        val fake = FakePeriodicScheduler()
+        val view = HeadlineCarouselView(context(), fake)
+        val list = listOf(headline("a1"), headline("a2"))
+        view.setHeadlines(list)
+        fake.fireTick()
+        assertEquals("a2", visibleTitle(view))
+
+        view.setHeadlines(listOf(headline("a1"), headline("a2")))
+        assertEquals("a2", visibleTitle(view))
+
+        fake.fireTick()
+        assertEquals("a1", visibleTitle(view))
+    }
+
+    @Test
     fun `tapping fires onHeadlineClick with the visible headline`() {
         val fake = FakePeriodicScheduler()
         val view = HeadlineCarouselView(context(), fake)

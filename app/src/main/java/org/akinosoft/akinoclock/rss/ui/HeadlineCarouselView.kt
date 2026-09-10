@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import org.akinosoft.akinoclock.R
 import org.akinosoft.akinoclock.rss.model.Headline
+import org.akinosoft.akinoclock.rss.model.RssUiState
 import org.akinosoft.akinoclock.util.FixedIntervalScheduler
 import org.akinosoft.akinoclock.util.PeriodicScheduler
 
@@ -57,9 +58,17 @@ class HeadlineCarouselView @JvmOverloads constructor(
         addView(emptyStateView)
         isClickable = true
         setOnClickListener { onBarClicked() }
+        // headlines starts as emptyList(), so match that visually up front — otherwise
+        // setHeadlines(emptyList())'s unchanged-input no-op would skip showing the placeholder
+        // on the very first call.
+        showEmptyState()
     }
 
     fun setHeadlines(newHeadlines: List<Headline>) {
+        // Idempotent on unchanged input: a caller re-emitting the same list (e.g. a status-only
+        // state change) must not reset the rotation or restart the scheduler mid-cycle.
+        if (newHeadlines == headlines) return
+
         val hadContent = headlines.isNotEmpty()
         headlines = newHeadlines
         pendingIndex = 0
@@ -75,6 +84,16 @@ class HeadlineCarouselView @JvmOverloads constructor(
         emptyStateView.visibility = GONE
         if (!hadContent) reveal(animate = false)
         if (newHeadlines.size > 1) scheduler.start { reveal(animate = true) }
+    }
+
+    /** Renders the whole carousel from a ViewModel state, mirroring `CalendarPanelView.render`. */
+    fun render(state: RssUiState) {
+        val headlines = when (state) {
+            is RssUiState.Empty -> emptyList()
+            is RssUiState.Showing -> state.headlines
+        }
+        setHeadlines(headlines)
+        setStale((state as? RssUiState.Showing)?.stale ?: false)
     }
 
     fun setStale(isStale: Boolean) {

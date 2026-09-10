@@ -19,7 +19,6 @@ import org.akinosoft.akinoclock.calendar.ui.PermissionAction
 import org.akinosoft.akinoclock.calendar.ui.PermissionButtonPolicy
 import org.akinosoft.akinoclock.databinding.ActivityMainBinding
 import org.akinosoft.akinoclock.rss.model.Headline
-import org.akinosoft.akinoclock.rss.model.RssUiState
 import org.akinosoft.akinoclock.rss.ui.RssViewModel
 
 class MainActivity : ComponentActivity() {
@@ -36,8 +35,6 @@ class MainActivity : ComponentActivity() {
         RssViewModel.Factory(container.rssRepository, container.defaultFeeds, container.clock)
     }
 
-    private var lastRssHeadlines: List<Headline>? = null
-
     private val requestCalendarPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         viewModel.refresh()
         updateGrantAccessButtonLabel()
@@ -53,12 +50,8 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state -> binding.calendarPanel.render(state) }
-            }
-        }
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                rssViewModel.uiState.collect { state -> renderRss(state) }
+                launch { viewModel.uiState.collect { state -> binding.calendarPanel.render(state) } }
+                launch { rssViewModel.uiState.collect { state -> binding.rssCarousel.render(state) } }
             }
         }
 
@@ -89,21 +82,6 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         binding.clockView.stop()
-    }
-
-    private fun renderRss(state: RssUiState) {
-        val headlines = when (state) {
-            is RssUiState.Empty -> emptyList()
-            is RssUiState.Showing -> state.headlines
-        }
-        // setHeadlines() restarts the rotation from index 0, so only call it when the list
-        // actually changed — status-only emissions (e.g. a stale flag flip) must not reset
-        // whichever headline is currently showing.
-        if (headlines != lastRssHeadlines) {
-            binding.rssCarousel.setHeadlines(headlines)
-            lastRssHeadlines = headlines
-        }
-        binding.rssCarousel.setStale((state as? RssUiState.Showing)?.stale ?: false)
     }
 
     private fun openHeadline(headline: Headline) {
