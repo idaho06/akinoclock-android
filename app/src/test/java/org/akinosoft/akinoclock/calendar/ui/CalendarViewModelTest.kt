@@ -200,6 +200,31 @@ class CalendarViewModelTest {
     }
 
     @Test
+    fun `start called again while already started still re-queries`() = runViewModelTest {
+        // Reproduces a real device bug: granting the permission via system Settings and
+        // returning to the app fires onStart -> start() again without an intervening onStop
+        // (the observer's callbackFlow never completes on its own), so start() must not skip
+        // the refresh just because a subscription is already active.
+        val repository = mockk<CalendarRepository> {
+            coEvery { instancesBetween(any(), any()) } returns emptyList()
+            every { changes() } returns MutableSharedFlow()
+        }
+        val permissionChecker = mockk<PermissionChecker> { every { hasReadCalendar() } returns true }
+
+        val viewModel = CalendarViewModel(
+            repository, permissionChecker, clockAt(LocalDate.of(2026, 9, 25)),
+            ioDispatcher = StandardTestDispatcher(testScheduler),
+        )
+        viewModel.start()
+        advanceUntilIdle()
+
+        viewModel.start()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { repository.instancesBetween(any(), any()) }
+    }
+
+    @Test
     fun `a clock advanced past midnight moves isToday to the new day on the next refresh`() = runViewModelTest {
         val repository = mockk<CalendarRepository> {
             coEvery { instancesBetween(any(), any()) } returns emptyList()

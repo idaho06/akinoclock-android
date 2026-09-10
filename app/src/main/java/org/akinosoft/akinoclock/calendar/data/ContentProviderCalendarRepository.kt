@@ -84,7 +84,13 @@ class ContentProviderCalendarRepository(
                 trySend(Unit)
             }
         }
-        context.contentResolver.registerContentObserver(CalendarContract.CONTENT_URI, true, observer)
+        // Unlike a query, registering an observer on this authority throws immediately
+        // (not just returning empty) when READ_CALENDAR isn't granted.
+        try {
+            context.contentResolver.registerContentObserver(CalendarContract.CONTENT_URI, true, observer)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "READ_CALENDAR permission revoked; not observing calendar changes", e)
+        }
         awaitClose { context.contentResolver.unregisterContentObserver(observer) }
     }
 }

@@ -27,12 +27,11 @@ import org.akinosoft.akinoclock.calendar.model.CalendarUiState
 private const val TAG = "CalendarViewModel"
 
 /**
- * Refreshing (a query plus the [CalendarRepository.changes] subscription) only runs
- * between [start] and [stop] — mirrors `ClockView.start()/stop()`, driven by the host
- * Activity's `onStart`/`onStop` so the ContentObserver isn't held while not visible.
- * Calling [start] while already started is a no-op, including the load it would
- * otherwise trigger — call [refresh] directly to force a reload while started (e.g.
- * after a permission-dialog result).
+ * The [CalendarRepository.changes] subscription only runs between [start] and [stop] —
+ * mirrors `ClockView.start()/stop()`, driven by the host Activity's `onStart`/`onStop` so
+ * the ContentObserver isn't held while not visible. [start] always triggers a reload, even
+ * if already started, since `onStart` can fire again (e.g. returning from system Settings)
+ * without an intervening `onStop`, and the permission state may have changed meanwhile.
  */
 class CalendarViewModel(
     private val repository: CalendarRepository,
@@ -47,9 +46,10 @@ class CalendarViewModel(
     private var changesJob: Job? = null
 
     fun start() {
-        if (changesJob?.isActive == true) return
-        changesJob = viewModelScope.launch {
-            repository.changes().collect { refresh() }
+        if (changesJob?.isActive != true) {
+            changesJob = viewModelScope.launch {
+                repository.changes().collect { refresh() }
+            }
         }
         refresh()
     }

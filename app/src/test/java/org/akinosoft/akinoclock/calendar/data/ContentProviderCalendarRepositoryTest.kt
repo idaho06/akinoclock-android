@@ -1,10 +1,13 @@
 package org.akinosoft.akinoclock.calendar.data
 
+import android.content.ContentResolver
 import android.content.Context
 import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.CalendarContract
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.every
+import io.mockk.mockk
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -138,6 +141,27 @@ class ContentProviderCalendarRepositoryTest {
         advanceUntilIdle()
 
         assertEquals(1, emitted.size)
+        job.cancel()
+    }
+
+    @Test
+    fun `changes does not crash when registerContentObserver throws SecurityException`() = runTest {
+        // Reproduces a real crash: registerContentObserver on the CalendarContract authority
+        // throws SecurityException immediately when READ_CALENDAR isn't granted (unlike a
+        // query, which the provider just fails). The Flow must not propagate that exception
+        // to its collector.
+        val contentResolver = mockk<ContentResolver> {
+            every { registerContentObserver(any(), any(), any()) } throws SecurityException("revoked")
+            every { unregisterContentObserver(any()) } returns Unit
+        }
+        val revokedContext = mockk<Context> { every { this@mockk.contentResolver } returns contentResolver }
+        val revokedRepository = ContentProviderCalendarRepository(revokedContext, ioDispatcher = UnconfinedTestDispatcher())
+
+        val emitted = mutableListOf<Unit>()
+        val job = launch { revokedRepository.changes().collect { emitted.add(it) } }
+        advanceUntilIdle()
+
+        assertTrue(emitted.isEmpty())
         job.cancel()
     }
 }
