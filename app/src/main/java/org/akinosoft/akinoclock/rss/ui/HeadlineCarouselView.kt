@@ -101,15 +101,19 @@ class HeadlineCarouselView @JvmOverloads constructor(
     }
 
     private fun crossfadeToBack() {
-        backChild.alpha = 0f
-        backChild.visibility = VISIBLE
-        backChild.animate().alpha(1f).setDuration(CROSSFADE_DURATION_MS).start()
-        frontChild.animate().alpha(0f).setDuration(CROSSFADE_DURATION_MS).withEndAction {
-            frontChild.visibility = INVISIBLE
+        // Capture the outgoing/incoming views in locals before swapping the frontChild/backChild
+        // fields below — the withEndAction lambda must hide the view that is actually fading
+        // out, not whatever the mutable field happens to point to 400ms from now.
+        val outgoing = frontChild
+        val incoming = backChild
+        incoming.alpha = 0f
+        incoming.visibility = VISIBLE
+        incoming.animate().alpha(1f).setDuration(CROSSFADE_DURATION_MS).start()
+        outgoing.animate().alpha(0f).setDuration(CROSSFADE_DURATION_MS).withEndAction {
+            outgoing.visibility = INVISIBLE
         }.start()
-        val swap = frontChild
-        frontChild = backChild
-        backChild = swap
+        frontChild = incoming
+        backChild = outgoing
     }
 
     private fun bind(view: View, headline: Headline) {

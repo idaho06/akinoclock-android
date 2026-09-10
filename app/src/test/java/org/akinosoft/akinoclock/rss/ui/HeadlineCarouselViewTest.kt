@@ -1,7 +1,10 @@
 package org.akinosoft.akinoclock.rss.ui
 
 import android.content.Context
+import android.os.Looper
+import android.view.View
 import androidx.test.core.app.ApplicationProvider
+import java.util.concurrent.TimeUnit
 import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.util.FakePeriodicScheduler
 import org.junit.Assert.assertEquals
@@ -11,6 +14,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 
 @RunWith(RobolectricTestRunner::class)
 class HeadlineCarouselViewTest {
@@ -98,6 +102,22 @@ class HeadlineCarouselViewTest {
 
         assertEquals("only", visibleTitle(view))
         assertFalse(fake.isRunning)
+    }
+
+    @Test
+    fun `after a crossfade animation finishes exactly one child view is left visible`() {
+        val fake = FakePeriodicScheduler()
+        val view = HeadlineCarouselView(context(), fake)
+        view.setHeadlines(listOf(headline("h1"), headline("h2")))
+
+        fake.fireTick()
+        shadowOf(Looper.getMainLooper()).idleFor(500, TimeUnit.MILLISECONDS)
+
+        val visibleChildren = (0 until view.childCount).count { i ->
+            val child = view.getChildAt(i)
+            child.visibility == View.VISIBLE && child.alpha > 0.5f
+        }
+        assertEquals(1, visibleChildren)
     }
 
     @Test

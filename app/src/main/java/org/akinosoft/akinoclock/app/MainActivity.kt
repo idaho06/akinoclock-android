@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -17,6 +18,9 @@ import org.akinosoft.akinoclock.calendar.ui.CalendarViewModel
 import org.akinosoft.akinoclock.calendar.ui.PermissionAction
 import org.akinosoft.akinoclock.calendar.ui.PermissionButtonPolicy
 import org.akinosoft.akinoclock.databinding.ActivityMainBinding
+import org.akinosoft.akinoclock.rss.model.Headline
+import org.akinosoft.akinoclock.rss.model.RssUiState
+import org.akinosoft.akinoclock.rss.ui.RssViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -27,6 +31,12 @@ class MainActivity : ComponentActivity() {
     private val viewModel: CalendarViewModel by viewModels {
         CalendarViewModel.Factory(container.calendarRepository, container.permissionChecker, container.clock)
     }
+
+    private val rssViewModel: RssViewModel by viewModels {
+        RssViewModel.Factory(container.rssRepository, container.defaultFeeds, container.clock)
+    }
+
+    private var lastRssHeadlines: List<Headline>? = null
 
     private val requestCalendarPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         viewModel.refresh()
@@ -39,10 +49,16 @@ class MainActivity : ComponentActivity() {
         setContentView(binding.root)
 
         binding.calendarPanel.grantAccessButton.setOnClickListener { onGrantAccessClicked() }
+        binding.rssCarousel.onHeadlineClick = { headline -> openHeadline(headline) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state -> binding.calendarPanel.render(state) }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                rssViewModel.uiState.collect { state -> renderRss(state) }
             }
         }
 
@@ -55,12 +71,14 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.start()
+        rssViewModel.start()
         updateGrantAccessButtonLabel()
     }
 
     override fun onStop() {
         super.onStop()
         viewModel.stop()
+        rssViewModel.stop()
     }
 
     override fun onResume() {
@@ -71,6 +89,31 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         binding.clockView.stop()
+    }
+
+    private fun renderRss(state: RssUiState) {
+        val headlines = when (state) {
+            is RssUiState.Empty -> emptyList()
+            is RssUiState.Showing -> state.headlines
+        }
+        // setHeadlines() restarts the rotation from index 0, so only call it when the list
+        // actually changed — status-only emissions (e.g. a stale flag flip) must not reset
+        // whichever headline is currently showing.
+        if (headlines != lastRssHeadlines) {
+            binding.rssCarousel.setHeadlines(headlines)
+            lastRssHeadlines = headlines
+        }
+        binding.rssCarousel.setStale((state as? RssUiState.Showing)?.stale ?: false)
+    }
+
+    private fun openHeadline(headline: Headline) {
+        val link = headline.link ?: return
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, R.string.rss_no_browser, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun onGrantAccessClicked() {
