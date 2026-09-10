@@ -8,6 +8,7 @@ data class CalendarPalette(
     val accent: Int,
     val dim: Int,
     val normal: Int,
+    val todayText: Int,
 ) {
     companion object {
         fun fromResources(context: Context): CalendarPalette = CalendarPalette(
@@ -15,6 +16,7 @@ data class CalendarPalette(
             accent = context.getColor(R.color.calendar_accent),
             dim = context.getColor(R.color.calendar_dim),
             normal = context.getColor(R.color.numeral),
+            todayText = context.getColor(R.color.calendar_today_text),
         )
     }
 }

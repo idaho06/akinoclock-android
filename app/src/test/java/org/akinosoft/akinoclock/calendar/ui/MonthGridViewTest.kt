@@ -56,6 +56,20 @@ class MonthGridViewTest {
     }
 
     @Test
+    fun `today's number is drawn with the todayText color, not normal`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.palette = view.palette.copy(todayText = Color.MAGENTA, normal = Color.BLUE)
+        view.setGrid(grid)
+        val bitmap = drawnBitmap(view)
+
+        val todayIndex = grid.cells.indexOfFirst { it.date == today }
+        val rect = view.cellRect(todayIndex)
+
+        val closest = closestNeighborhoodMatch(bitmap, rect.centerX().toInt(), rect.centerY().toInt(), Color.MAGENTA)
+        assertTrue(colorDistance(closest, Color.MAGENTA) < colorDistance(closest, Color.BLUE))
+    }
+
+    @Test
     fun `a cell with events has the accent color at its dot position`() {
         val view = MonthGridView(ApplicationProvider.getApplicationContext())
         view.setGrid(grid)

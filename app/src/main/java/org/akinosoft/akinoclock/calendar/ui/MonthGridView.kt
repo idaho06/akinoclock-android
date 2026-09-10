@@ -82,7 +82,11 @@ open class MonthGridView @JvmOverloads constructor(
                 canvas.drawCircle(rect.centerX(), rect.centerY(), radius, paint)
             }
 
-            val textColor = if (cell.inCurrentMonth) palette.normal else palette.dim
+            val textColor = when {
+                cell.isToday -> palette.todayText
+                cell.inCurrentMonth -> palette.normal
+                else -> palette.dim
+            }
             drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.35f)
 
             if (cell.hasEvents) {

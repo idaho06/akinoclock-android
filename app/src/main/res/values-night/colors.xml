@@ -16,4 +16,6 @@
     <color name="calendar_today">@color/hand_tip</color>
     <color name="calendar_accent">@color/second_hand</color>
     <color name="calendar_dim">@color/tick_minute</color>
+    <!-- Always dark: readable against the pale green today circle in both themes. -->
+    <color name="calendar_today_text">#151515</color>
 </resources>
