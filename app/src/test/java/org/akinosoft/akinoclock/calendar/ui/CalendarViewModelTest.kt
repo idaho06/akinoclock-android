@@ -74,7 +74,9 @@ class CalendarViewModelTest {
         viewModel.start()
         advanceUntilIdle()
 
-        assertEquals(CalendarUiState.NotGranted, viewModel.uiState.value)
+        val state = viewModel.uiState.value as CalendarUiState.NotGranted
+        assertEquals(42, state.grid.cells.size)
+        assertTrue(state.grid.cells.none { it.hasEvents })
         coVerify(exactly = 0) { repository.instancesBetween(any(), any()) }
     }
 
@@ -274,7 +276,7 @@ class CalendarViewModelTest {
         viewModel.start()
         advanceUntilIdle()
 
-        assertEquals(CalendarUiState.NotGranted, viewModel.uiState.value)
+        assertTrue(viewModel.uiState.value is CalendarUiState.NotGranted)
     }
 
     @Test

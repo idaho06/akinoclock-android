@@ -64,13 +64,19 @@ class CalendarViewModel(
     }
 
     private suspend fun load() {
+        val now = ZonedDateTime.now(clock)
+        val month = YearMonth.from(now)
+        val today = now.toLocalDate()
+
+        // The grid still renders (without dots) while permission is missing, so build it
+        // from an empty day set up front rather than only on the granted path.
+        fun notGranted() = CalendarUiState.NotGranted(MonthGridBuilder.build(month, today, emptySet()))
+
         if (!permissionChecker.hasReadCalendar()) {
-            _uiState.value = CalendarUiState.NotGranted
+            _uiState.value = notGranted()
             return
         }
 
-        val now = ZonedDateTime.now(clock)
-        val month = YearMonth.from(now)
         val window = QueryWindow.forGrid(month, clock.zone)
 
         try {
@@ -81,14 +87,14 @@ class CalendarViewModel(
             // A SecurityException from the resolver surfaces as an empty list rather than
             // an exception, so re-check permission here instead of trusting an empty result.
             if (!permissionChecker.hasReadCalendar()) {
-                _uiState.value = CalendarUiState.NotGranted
+                _uiState.value = notGranted()
                 return
             }
 
             val eventDays = InstanceMapper.eventDays(instances, clock.zone)
-            val grid = MonthGridBuilder.build(month, now.toLocalDate(), eventDays)
+            val grid = MonthGridBuilder.build(month, today, eventDays)
             val todayList = UpcomingSelector.select(instances, now)
-            _uiState.value = CalendarUiState.Granted(grid, todayList)
+            _uiState.value = CalendarUiState.Granted(grid, todayList, today)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
