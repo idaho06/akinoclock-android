@@ -43,6 +43,12 @@ class FeedCache(
         fileFor(url).delete()
     }
 
+    /** Bumps a cached entry's mtime without rewriting its bytes, e.g. after a 304 response. */
+    fun touch(url: String) {
+        val file = fileFor(url)
+        if (file.isFile) file.setLastModified(nowMillis())
+    }
+
     private fun fileFor(url: String) = File(cacheDir, "${sha1Hex(url)}.xml")
 
     private fun sha1Hex(text: String): String {
