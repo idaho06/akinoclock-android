@@ -49,10 +49,23 @@ open class MonthGridView @JvmOverloads constructor(
     /** The rect for weekday header column [col] (0 = Monday .. 6 = Sunday). */
     fun headerRect(col: Int): RectF = columnRect(col, row = 0)
 
+    private var geometryWidth = -1
+    private var geometryHeight = -1
+    private var cellSize = 0f
+    private var offsetX = 0f
+    private var offsetY = 0f
+
+    private fun ensureGeometry() {
+        if (geometryWidth == width && geometryHeight == height) return
+        geometryWidth = width
+        geometryHeight = height
+        cellSize = minOf(width.toFloat() / GRID_COLUMNS, height.toFloat() / TOTAL_ROWS)
+        offsetX = (width - cellSize * GRID_COLUMNS) / 2f
+        offsetY = (height - cellSize * TOTAL_ROWS) / 2f
+    }
+
     private fun columnRect(col: Int, row: Int): RectF {
-        val cellSize = minOf(width.toFloat() / GRID_COLUMNS, height.toFloat() / TOTAL_ROWS)
-        val offsetX = (width - cellSize * GRID_COLUMNS) / 2f
-        val offsetY = (height - cellSize * TOTAL_ROWS) / 2f
+        ensureGeometry()
         val left = offsetX + col * cellSize
         val top = offsetY + row * cellSize
         return RectF(left, top, left + cellSize, top + cellSize)

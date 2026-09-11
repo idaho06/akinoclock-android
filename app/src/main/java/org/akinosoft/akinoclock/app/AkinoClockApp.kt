@@ -4,10 +4,13 @@ import android.app.Application
 
 class AkinoClockApp : Application() {
 
+    @Volatile
     private var _container: AppContainer? = null
     var container: AppContainer
-        get() = _container ?: AppContainer(this).also { _container = it }
-        set(value) { _container = value }
+        get() = _container ?: synchronized(this) {
+            _container ?: AppContainer(this).also { _container = it }
+        }
+        set(value) = synchronized(this) { _container = value }
 
     override fun onCreate() {
         super.onCreate()
