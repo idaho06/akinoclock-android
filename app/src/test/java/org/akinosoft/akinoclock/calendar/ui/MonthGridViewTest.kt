@@ -114,6 +114,47 @@ class MonthGridViewTest {
     }
 
     @Test
+    fun `cells are square even when the view is not`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.layout(0, 0, 700, 210)
+
+        val rect = view.cellRect(0)
+        assertEquals(rect.width(), rect.height(), 0.01f)
+    }
+
+    @Test
+    fun `a wide-short view is height-constrained and horizontally centered`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.layout(0, 0, 700, 210)
+
+        // cellSize = min(700/7, 210/7) = min(100, 30) = 30; leftover width = 700 - 30*7 = 490, offsetX = 245.
+        val header = view.headerRect(0)
+        assertEquals(245f, header.left, 0.01f)
+        assertEquals(0f, header.top, 0.01f)
+        assertEquals(30f, header.width(), 0.01f)
+
+        val lastCell = view.cellRect(41) // row 6 (last grid row), col 6 (last column)
+        assertEquals(455f, lastCell.right, 0.01f)
+        assertEquals(210f, lastCell.bottom, 0.01f)
+    }
+
+    @Test
+    fun `a tall-narrow view is width-constrained and vertically centered`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.layout(0, 0, 210, 700)
+
+        // cellSize = min(210/7, 700/7) = min(30, 100) = 30; leftover height = 700 - 30*7 = 490, offsetY = 245.
+        val header = view.headerRect(0)
+        assertEquals(0f, header.left, 0.01f)
+        assertEquals(245f, header.top, 0.01f)
+        assertEquals(30f, header.height(), 0.01f)
+
+        val lastCell = view.cellRect(41)
+        assertEquals(210f, lastCell.right, 0.01f)
+        assertEquals(455f, lastCell.bottom, 0.01f)
+    }
+
+    @Test
     fun `setGrid triggers invalidate`() {
         var invalidateCount = 0
         val trackingView = object : MonthGridView(ApplicationProvider.getApplicationContext()) {

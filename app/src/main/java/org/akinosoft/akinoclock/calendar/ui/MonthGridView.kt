@@ -50,11 +50,12 @@ open class MonthGridView @JvmOverloads constructor(
     fun headerRect(col: Int): RectF = columnRect(col, row = 0)
 
     private fun columnRect(col: Int, row: Int): RectF {
-        val cellWidth = width.toFloat() / GRID_COLUMNS
-        val cellHeight = height.toFloat() / TOTAL_ROWS
-        val left = col * cellWidth
-        val top = row * cellHeight
-        return RectF(left, top, left + cellWidth, top + cellHeight)
+        val cellSize = minOf(width.toFloat() / GRID_COLUMNS, height.toFloat() / TOTAL_ROWS)
+        val offsetX = (width - cellSize * GRID_COLUMNS) / 2f
+        val offsetY = (height - cellSize * TOTAL_ROWS) / 2f
+        val left = offsetX + col * cellSize
+        val top = offsetY + row * cellSize
+        return RectF(left, top, left + cellSize, top + cellSize)
     }
 
     private fun drawCenteredText(canvas: Canvas, text: String, rect: RectF, color: Int, textSizeRatio: Float) {
