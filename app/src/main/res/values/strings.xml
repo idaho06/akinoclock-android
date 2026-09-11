@@ -9,4 +9,23 @@
     <string name="rss_no_headlines">No headlines — add feeds in settings</string>
     <string name="rss_stale_glyph">⚠</string>
     <string name="rss_no_browser">No browser app found to open this link</string>
+
+    <string name="settings_open">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_refresh_now">Refresh now</string>
+    <string name="settings_feeds_title">Feeds</string>
+    <string name="settings_add_feed">Add feed</string>
+    <string name="settings_remove_feed">Remove feed</string>
+    <string name="settings_feed_url_hint">Feed URL</string>
+    <string name="settings_edit_feed_title">Edit feed</string>
+    <string name="settings_add_feed_title">Add feed</string>
+    <string name="settings_dialog_save">Save</string>
+    <string name="settings_dialog_cancel">Cancel</string>
+    <string name="settings_refresh_updated">Feeds updated</string>
+    <string name="settings_refresh_some_failed">Some feeds failed to update</string>
+    <string name="settings_refresh_all_failed">All feeds failed to update</string>
+    <string name="settings_refresh_no_feeds">No feeds configured</string>
 </resources>

@@ -10,7 +10,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -18,15 +17,12 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.akinosoft.akinoclock.calendar.data.CalendarRepository
 import org.akinosoft.akinoclock.calendar.data.PermissionChecker
 import org.akinosoft.akinoclock.calendar.model.CalendarUiState
 import org.akinosoft.akinoclock.calendar.model.EventInstance
+import org.akinosoft.akinoclock.util.runViewModelTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -51,14 +47,6 @@ class CalendarViewModelTest {
     private fun clockAt(date: LocalDate, hour: Int = 12): Clock =
         Clock.fixed(ZonedDateTime.of(date, java.time.LocalTime.of(hour, 0), madrid).toInstant(), madrid)
 
-    private fun runViewModelTest(block: suspend TestScope.() -> Unit) = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        try {
-            block()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
 
     @Test
     fun `permission denied yields NotGranted and never queries the repository`() = runViewModelTest {

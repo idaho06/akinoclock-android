@@ -36,6 +36,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".settings.ui.SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".app.MainActivity" />
+
     </application>
 
 </manifest>

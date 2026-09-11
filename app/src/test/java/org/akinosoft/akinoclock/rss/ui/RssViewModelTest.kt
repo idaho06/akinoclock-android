@@ -7,23 +7,19 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.akinosoft.akinoclock.rss.data.RefreshOutcome
 import org.akinosoft.akinoclock.rss.data.RssRepository
 import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.rss.model.FeedStatus
 import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.model.RssUiState
+import org.akinosoft.akinoclock.util.runViewModelTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -49,15 +45,6 @@ class RssViewModelTest {
 
     private fun headline(title: String) = Headline(feedTitle = "feed", title = title, link = null, published = null)
 
-    private fun runViewModelTest(block: suspend TestScope.() -> Unit) = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        try {
-            block()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
     private class Repo(
         val headlinesFlow: MutableStateFlow<List<Headline>> = MutableStateFlow(emptyList()),
         val statusFlow: MutableStateFlow<Map<String, FeedStatus>> = MutableStateFlow(emptyMap()),
@@ -80,7 +67,7 @@ class RssViewModelTest {
     @Test
     fun `start triggers an immediate refresh when there is no prior success`() = runViewModelTest {
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), Clock.systemUTC())
 
         viewModel.start()
         runCurrent()
@@ -97,7 +84,7 @@ class RssViewModelTest {
             override fun getZone() = ZoneOffset.UTC
             override fun withZone(zone: ZoneId) = this
         }
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), clock)
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), clock)
         viewModel.refreshNow()
         advanceUntilIdle()
         assertEquals(1, repo.refreshCallTimes.size)
@@ -117,7 +104,7 @@ class RssViewModelTest {
             override fun getZone() = ZoneOffset.UTC
             override fun withZone(zone: ZoneId) = this
         }
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), clock)
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), clock)
         viewModel.refreshNow()
         advanceUntilIdle()
         assertEquals(1, repo.refreshCallTimes.size)
@@ -132,7 +119,7 @@ class RssViewModelTest {
     @Test
     fun `refreshes every 30 minutes while started, and stop cancels further refreshes`() = runViewModelTest {
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), Clock.systemUTC())
 
         viewModel.start()
         runCurrent()
@@ -156,7 +143,7 @@ class RssViewModelTest {
     fun `failures retry with backoff of 1, 2, 4, 8, 15, 15 minutes, and success resets it`() = runViewModelTest {
         val repo = Repo()
         repo.outcome = RefreshOutcome.ALL_FAILED
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), Clock.systemUTC())
 
         viewModel.start()
         runCurrent()
@@ -183,7 +170,7 @@ class RssViewModelTest {
     @Test
     fun `refreshNow refreshes immediately regardless of the schedule`() = runViewModelTest {
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), Clock.systemUTC())
 
         viewModel.refreshNow()
         advanceUntilIdle()
@@ -193,11 +180,17 @@ class RssViewModelTest {
     }
 
     @Test
-    fun `no feeds yields Empty with noFeeds true`() = runViewModelTest {
+    fun `before start, the initial state is a loading-neutral placeholder`() = runViewModelTest {
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), emptyList(), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(emptyList()), Clock.systemUTC())
 
-        assertEquals(RssUiState.Empty(noFeeds = true), viewModel.uiState.value)
+        assertEquals(RssUiState.Empty(noFeeds = false), viewModel.uiState.value)
+    }
+
+    @Test
+    fun `no feeds yields Empty with noFeeds true once started`() = runViewModelTest {
+        val repo = Repo()
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(emptyList()), Clock.systemUTC())
 
         viewModel.start()
         advanceUntilIdle()
@@ -208,7 +201,7 @@ class RssViewModelTest {
     @Test
     fun `feeds configured but no headlines yet yields Empty with noFeeds false`() = runViewModelTest {
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), Clock.systemUTC())
 
         viewModel.start()
         runCurrent()
@@ -217,9 +210,35 @@ class RssViewModelTest {
     }
 
     @Test
+    fun `a feed change while stopped still forces an immediate refresh with the new list on the next start`() =
+        runViewModelTest {
+            // Reproduces a real device bug: editing feeds in SettingsActivity happens while
+            // MainActivity (and its RssViewModel) is stopped, so the feed-change watcher job that
+            // triggers onFeedsChanged() is not running to observe the transition — it only sees
+            // the already-updated list as its "initial" value once re-subscribed by start(), and
+            // that initial value is dropped. isDueForImmediateRefresh() must therefore also check
+            // feed-list identity, not just staleness, so start() still refreshes with the new list.
+            val repo = Repo()
+            val feedsFlow = MutableStateFlow(listOf(feedA))
+            val viewModel = RssViewModel(mockRepository(repo), feedsFlow, Clock.systemUTC())
+            viewModel.start()
+            runCurrent()
+            assertEquals(1, repo.refreshCallTimes.size)
+            viewModel.stop()
+
+            feedsFlow.value = listOf(feedB)
+            runCurrent()
+            viewModel.start()
+            runCurrent()
+
+            assertEquals(2, repo.refreshCallTimes.size)
+            assertEquals(listOf(feedB), repo.refreshCallFeeds.last())
+        }
+
+    @Test
     fun `headlines with every feed's latest attempt failed are shown as stale`() = runViewModelTest {
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA, feedB), Clock.systemUTC())
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA, feedB)), Clock.systemUTC())
         viewModel.start()
         runCurrent()
 
@@ -235,11 +254,28 @@ class RssViewModelTest {
     }
 
     @Test
+    fun `changing the feeds flow after start refreshes immediately with the new list`() = runViewModelTest {
+        val repo = Repo()
+        val feedsFlow = MutableStateFlow(listOf(feedA))
+        val viewModel = RssViewModel(mockRepository(repo), feedsFlow, Clock.systemUTC())
+        viewModel.start()
+        runCurrent()
+        assertEquals(1, repo.refreshCallTimes.size)
+        assertEquals(listOf(feedA), repo.refreshCallFeeds.last())
+
+        feedsFlow.value = listOf(feedB)
+        runCurrent()
+
+        assertEquals(2, repo.refreshCallTimes.size)
+        assertEquals(listOf(feedB), repo.refreshCallFeeds.last())
+    }
+
+    @Test
     fun `headlines with a recent success and no error are not stale`() = runViewModelTest {
         val fixedNow = Instant.parse("2026-09-10T12:00:00Z")
         val clock = Clock.fixed(fixedNow, ZoneOffset.UTC)
         val repo = Repo()
-        val viewModel = RssViewModel(mockRepository(repo), listOf(feedA), clock)
+        val viewModel = RssViewModel(mockRepository(repo), MutableStateFlow(listOf(feedA)), clock)
         viewModel.start()
         runCurrent()
 

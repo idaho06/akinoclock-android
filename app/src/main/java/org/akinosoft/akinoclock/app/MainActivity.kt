@@ -20,6 +20,7 @@ import org.akinosoft.akinoclock.calendar.ui.PermissionButtonPolicy
 import org.akinosoft.akinoclock.databinding.ActivityMainBinding
 import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.ui.RssViewModel
+import org.akinosoft.akinoclock.settings.ui.SettingsActivity
 
 class MainActivity : ComponentActivity() {
 
@@ -32,7 +33,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val rssViewModel: RssViewModel by viewModels {
-        RssViewModel.Factory(container.rssRepository, container.defaultFeeds, container.clock)
+        RssViewModel.Factory(container.rssRepository, container.settingsRepository.feeds, container.clock)
     }
 
     private val requestCalendarPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
 
         binding.calendarPanel.grantAccessButton.setOnClickListener { onGrantAccessClicked() }
         binding.rssCarousel.onHeadlineClick = { headline -> openHeadline(headline) }
+        binding.settingsButton.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -55,8 +57,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (!container.calendarPrefs.permissionAsked()) {
-            container.calendarPrefs.setPermissionAsked()
+        if (!container.settingsRepository.permissionAsked()) {
+            container.settingsRepository.setPermissionAsked()
             requestCalendarPermission.launch(Manifest.permission.READ_CALENDAR)
         }
     }
@@ -111,7 +113,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun permissionButtonAction(): PermissionAction = PermissionButtonPolicy.decide(
-        alreadyAsked = container.calendarPrefs.permissionAsked(),
+        alreadyAsked = container.settingsRepository.permissionAsked(),
         canShowRationale = shouldShowRequestPermissionRationale(Manifest.permission.READ_CALENDAR),
     )
 }
