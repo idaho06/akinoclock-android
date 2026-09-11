@@ -11,7 +11,7 @@ data class HandRect(val width: Float, val tailY: Float, val tipY: Float)
 
 data class TipSegment(val startY: Float, val endY: Float, val width: Float)
 
-enum class HandKind { HOUR, MINUTE, SECOND }
+enum class HandKind { HOUR, MINUTE, SECOND, ALARM }
 
 /**
  * Pure geometry for the dial: all functions take a radius `r` and return simple data,
@@ -69,11 +69,15 @@ object ClockGeometry {
         HandKind.HOUR -> HandRect(width = 0.06f * r, tailY = 0.08f * r, tipY = -0.50f * r)
         HandKind.MINUTE -> HandRect(width = 0.05f * r, tailY = 0.08f * r, tipY = -0.74f * r)
         HandKind.SECOND -> HandRect(width = 0.012f * r, tailY = 0.18f * r, tipY = -0.80f * r)
+        HandKind.ALARM -> HandRect(width = 0.02f * r, tailY = 0f, tipY = -0.60f * r)
     }
 
     fun tipSegment(kind: HandKind, r: Float): TipSegment {
         require(kind != HandKind.SECOND) { "the second hand has no tip color segment" }
         val rect = handRect(kind, r)
+        if (kind == HandKind.ALARM) {
+            return TipSegment(startY = rect.tipY, endY = rect.tipY + 0.08f * r, width = 0.05f * r)
+        }
         val zoneLength = if (kind == HandKind.HOUR) 0.18f * r else 0.22f * r
         val margin = TIP_MARGIN_RATIO * r
         return TipSegment(
