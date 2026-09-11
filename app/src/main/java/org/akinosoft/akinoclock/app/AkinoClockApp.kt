@@ -4,7 +4,10 @@ import android.app.Application
 
 class AkinoClockApp : Application() {
 
-    val container: AppContainer by lazy { AppContainer(this) }
+    private var _container: AppContainer? = null
+    var container: AppContainer
+        get() = _container ?: AppContainer(this).also { _container = it }
+        set(value) { _container = value }
 
     override fun onCreate() {
         super.onCreate()

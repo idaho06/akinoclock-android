@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,7 +25,7 @@ import org.akinosoft.akinoclock.settings.ui.SettingsActivity
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivityMainBinding
+    internal lateinit var binding: ActivityMainBinding
 
     private val container get() = (application as AkinoClockApp).container
 
@@ -45,6 +46,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         binding.calendarPanel.grantAccessButton.setOnClickListener { onGrantAccessClicked() }
         binding.rssCarousel.onHeadlineClick = { headline -> openHeadline(headline) }

@@ -23,4 +23,14 @@ class AkinoClockAppTest {
     fun `runs on the pinned SDK 33`() {
         assertEquals(33, Build.VERSION.SDK_INT)
     }
+
+    @Test
+    fun `container is settable for tests`() {
+        val app = ApplicationProvider.getApplicationContext<AkinoClockApp>()
+        val replacement = AppContainer(app)
+
+        app.container = replacement
+
+        assertEquals(replacement, app.container)
+    }
 }
