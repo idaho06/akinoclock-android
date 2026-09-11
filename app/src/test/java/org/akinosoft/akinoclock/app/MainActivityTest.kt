@@ -3,6 +3,8 @@ package org.akinosoft.akinoclock.app
 import android.view.WindowManager
 import android.widget.LinearLayout
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.time.Clock
@@ -16,12 +18,10 @@ import org.akinosoft.akinoclock.calendar.model.EventInstance
 import org.akinosoft.akinoclock.rss.data.RefreshOutcome
 import org.akinosoft.akinoclock.rss.data.RssRepository
 import org.akinosoft.akinoclock.rss.model.FeedConfig
-import org.akinosoft.akinoclock.rss.model.FeedStatus
-import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.settings.data.SettingsRepository
-import org.akinosoft.akinoclock.settings.model.ThemeMode
 import org.akinosoft.akinoclock.settings.ui.SettingsActivity
 import org.akinosoft.akinoclock.util.FakePeriodicScheduler
+import org.akinosoft.akinoclock.util.FakeSettingsRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -48,30 +48,10 @@ private class FakeCalendarRepository : CalendarRepository {
     }
 }
 
-private class FakeRssRepository : RssRepository {
-    var refreshCallCount = 0
-        private set
-
-    override fun headlines(): Flow<List<Headline>> = MutableStateFlow(emptyList())
-    override fun status(): Flow<Map<String, FeedStatus>> = MutableStateFlow(emptyMap())
-    override suspend fun refresh(feeds: List<FeedConfig>): RefreshOutcome {
-        refreshCallCount++
-        return RefreshOutcome.SUCCESS
-    }
-}
-
-private class FakeSettingsRepository(
-    private val initialFeeds: List<FeedConfig> = listOf(FeedConfig(url = "https://example.com/feed.xml")),
-) : SettingsRepository {
-    override val feeds: Flow<List<FeedConfig>> = MutableStateFlow(initialFeeds)
-    override val themeMode: Flow<ThemeMode> = MutableStateFlow(ThemeMode.SYSTEM)
-
-    override suspend fun setFeeds(list: List<FeedConfig>) = Unit
-    override suspend fun setThemeMode(mode: ThemeMode) = Unit
-    override fun currentFeeds(): List<FeedConfig> = initialFeeds
-    override fun currentThemeMode(): ThemeMode = ThemeMode.SYSTEM
-    override fun permissionAsked(): Boolean = true
-    override fun setPermissionAsked() = Unit
+private fun fakeRssRepository(): RssRepository = mockk {
+    every { headlines() } returns MutableStateFlow(emptyList())
+    every { status() } returns MutableStateFlow(emptyMap())
+    coEvery { refresh(any()) } returns RefreshOutcome.SUCCESS
 }
 
 @RunWith(RobolectricTestRunner::class)
@@ -79,8 +59,10 @@ class MainActivityTest {
 
     private fun installFakeContainer(
         calendarRepository: CalendarRepository = FakeCalendarRepository(),
-        rssRepository: RssRepository = FakeRssRepository(),
-        settingsRepository: SettingsRepository = FakeSettingsRepository(),
+        rssRepository: RssRepository = fakeRssRepository(),
+        settingsRepository: SettingsRepository = FakeSettingsRepository(
+            initialFeeds = listOf(FeedConfig(url = "https://example.com/feed.xml")),
+        ),
         permissionChecker: PermissionChecker = mockk { every { hasReadCalendar() } returns true },
     ) {
         val app = ApplicationProvider.getApplicationContext<AkinoClockApp>()
@@ -118,13 +100,13 @@ class MainActivityTest {
 
     @Test
     fun `starting the activity triggers an rss refresh`() {
-        val rssRepository = FakeRssRepository()
+        val rssRepository = fakeRssRepository()
         installFakeContainer(rssRepository = rssRepository)
         val controller = Robolectric.buildActivity(MainActivity::class.java).create()
 
         controller.start()
 
-        assertTrue(rssRepository.refreshCallCount > 0)
+        coVerify(atLeast = 1) { rssRepository.refresh(any()) }
     }
 
     @Test
