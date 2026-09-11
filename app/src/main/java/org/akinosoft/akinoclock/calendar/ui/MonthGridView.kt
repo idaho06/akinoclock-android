@@ -49,26 +49,12 @@ open class MonthGridView @JvmOverloads constructor(
     /** The rect for weekday header column [col] (0 = Monday .. 6 = Sunday). */
     fun headerRect(col: Int): RectF = columnRect(col, row = 0)
 
-    private var geometryWidth = -1
-    private var geometryHeight = -1
-    private var cellSize = 0f
-    private var offsetX = 0f
-    private var offsetY = 0f
-
-    private fun ensureGeometry() {
-        if (geometryWidth == width && geometryHeight == height) return
-        geometryWidth = width
-        geometryHeight = height
-        cellSize = minOf(width.toFloat() / GRID_COLUMNS, height.toFloat() / TOTAL_ROWS)
-        offsetX = (width - cellSize * GRID_COLUMNS) / 2f
-        offsetY = (height - cellSize * TOTAL_ROWS) / 2f
-    }
-
     private fun columnRect(col: Int, row: Int): RectF {
-        ensureGeometry()
-        val left = offsetX + col * cellSize
-        val top = offsetY + row * cellSize
-        return RectF(left, top, left + cellSize, top + cellSize)
+        val cellWidth = width.toFloat() / GRID_COLUMNS
+        val cellHeight = height.toFloat() / TOTAL_ROWS
+        val left = col * cellWidth
+        val top = row * cellHeight
+        return RectF(left, top, left + cellWidth, top + cellHeight)
     }
 
     private fun drawCenteredText(canvas: Canvas, text: String, rect: RectF, color: Int, textSizeRatio: Float) {
@@ -84,7 +70,7 @@ open class MonthGridView @JvmOverloads constructor(
 
         for (col in 0 until GRID_COLUMNS) {
             val label = DayOfWeek.MONDAY.plus(col.toLong()).getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            drawCenteredText(canvas, label, headerRect(col), palette.dim, textSizeRatio = 0.3f)
+            drawCenteredText(canvas, label, headerRect(col), palette.dim, textSizeRatio = 0.34f)
         }
 
         currentGrid.cells.forEachIndexed { index, cell ->
@@ -101,7 +87,7 @@ open class MonthGridView @JvmOverloads constructor(
                 cell.inCurrentMonth -> palette.normal
                 else -> palette.dim
             }
-            drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.35f)
+            drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.42f)
 
             if (cell.hasEvents) {
                 paint.color = palette.accent
