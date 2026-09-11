@@ -7,7 +7,10 @@ import io.mockk.mockk
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.junit.Assert.assertEquals
@@ -17,6 +20,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DefaultRssRepositoryTest {
 
     @get:Rule
@@ -33,17 +37,27 @@ class DefaultRssRepositoryTest {
     """.trimIndent().toByteArray()
 
     @Test
-    fun `headlines emits cached content before any network call`() = runTest {
-        val feed = FeedConfig(url = "https://example.com/feed.xml")
-        val cache = cache()
-        cache.write(feed.url, rss("Cached story"))
-        val fetcher = mockk<FeedFetcher>()
+    fun `headlines eventually reflect cached content, loaded off the caller's thread, without any network call`() =
+        runTest {
+            val feed = FeedConfig(url = "https://example.com/feed.xml")
+            val cache = cache()
+            cache.write(feed.url, rss("Cached story"))
+            val fetcher = mockk<FeedFetcher>()
 
-        val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
+            val repository = DefaultRssRepository(
+                listOf(feed), fetcher, cache, fixedClock,
+                ioDispatcher = StandardTestDispatcher(testScheduler),
+            )
 
-        assertEquals(listOf("Cached story"), repository.headlines().first().map { it.title })
-        coVerify(exactly = 0) { fetcher.fetch(any(), any()) }
-    }
+            // The cache load is dispatched, not run inline on the constructing thread: nothing
+            // is loaded yet immediately after construction returns.
+            assertEquals(emptyList<String>(), repository.headlines().first().map { it.title })
+
+            advanceUntilIdle()
+
+            assertEquals(listOf("Cached story"), repository.headlines().first().map { it.title })
+            coVerify(exactly = 0) { fetcher.fetch(any(), any()) }
+        }
 
     @Test
     fun `refresh success updates cache, headlines and status`() = runTest {

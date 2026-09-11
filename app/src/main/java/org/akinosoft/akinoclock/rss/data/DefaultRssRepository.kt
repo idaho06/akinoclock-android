@@ -3,10 +3,13 @@ package org.akinosoft.akinoclock.rss.data
 import java.time.Clock
 import java.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.rss.model.FeedStatus
@@ -16,10 +19,17 @@ import org.akinosoft.akinoclock.rss.parse.FeedParser
 import org.akinosoft.akinoclock.rss.parse.Interleaver
 
 /**
- * Combines [FeedFetcher], [FeedParser] and [FeedCache]: cached headlines are available
- * synchronously from [initialFeeds] before any network call, and [refresh] fetches feeds
- * sequentially (this device has no need for parallel connections) updating the cache, the
- * headlines/status flows, and pruning feeds no longer in the configured list.
+ * Combines [FeedFetcher], [FeedParser] and [FeedCache]: cached headlines are loaded off the
+ * constructing thread and become available once that finishes (before any network call), and
+ * [refresh] fetches feeds sequentially (this device has no need for parallel connections)
+ * updating the cache, the headlines/status flows, and pruning feeds no longer in the configured
+ * list. Reading and parsing every cached feed's XML is real CPU/IO work — on a slow device with a
+ * warm cache this can take seconds, so it must never run on the thread that constructs this
+ * repository (typically the app's main thread via `AppContainer`).
+ *
+ * [mutationDispatcher] confines every read-modify-write of [headlinesByUrl]/[statusByUrl]/
+ * [trackedFeeds] (both the background cache warm-up below and [refresh]) to a single logical
+ * thread, so the two can never race on that shared state.
  */
 class DefaultRssRepository(
     initialFeeds: List<FeedConfig>,
@@ -36,17 +46,22 @@ class DefaultRssRepository(
     private val _headlines = MutableStateFlow<List<Headline>>(emptyList())
     private val _status = MutableStateFlow<Map<String, FeedStatus>>(emptyMap())
 
+    private val mutationDispatcher = ioDispatcher.limitedParallelism(1)
+    private val scope = CoroutineScope(SupervisorJob() + mutationDispatcher)
+
     init {
         trackedFeeds = initialFeeds
-        initialFeeds.forEach { loadFromCache(it) }
-        recompute(initialFeeds)
+        scope.launch {
+            initialFeeds.forEach { loadFromCache(it) }
+            recompute(initialFeeds)
+        }
     }
 
     override fun headlines(): Flow<List<Headline>> = _headlines.asStateFlow()
 
     override fun status(): Flow<Map<String, FeedStatus>> = _status.asStateFlow()
 
-    override suspend fun refresh(feeds: List<FeedConfig>): RefreshOutcome {
+    override suspend fun refresh(feeds: List<FeedConfig>): RefreshOutcome = withContext(mutationDispatcher) {
         dropRemovedFeeds(feeds)
         feeds.filter { it.url !in headlinesByUrl }.forEach { loadFromCache(it) }
         trackedFeeds = feeds
@@ -57,7 +72,7 @@ class DefaultRssRepository(
         }
         recompute(feeds)
 
-        return when {
+        when {
             feeds.isEmpty() -> RefreshOutcome.NO_FEEDS
             successCount == feeds.size -> RefreshOutcome.SUCCESS
             successCount == 0 -> RefreshOutcome.ALL_FAILED
