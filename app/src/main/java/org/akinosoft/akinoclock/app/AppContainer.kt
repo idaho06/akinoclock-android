@@ -21,11 +21,9 @@ class AppContainer(
     val calendarRepository: CalendarRepository = ContentProviderCalendarRepository(context),
     val permissionChecker: PermissionChecker = ContextPermissionChecker(context),
     val settingsRepository: SettingsRepository = SharedPreferencesSettingsRepository(context),
-    val rssRepository: RssRepository = defaultRssRepository(context, settingsRepository, clock),
+    val rssRepository: RssRepository = run {
+        val feedFetcher = HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}")
+        val feedCache = FeedCache(File(context.filesDir, "rss-cache"))
+        DefaultRssRepository(settingsRepository.currentFeeds(), feedFetcher, feedCache, clock)
+    },
 )
-
-private fun defaultRssRepository(context: Context, settingsRepository: SettingsRepository, clock: Clock): RssRepository {
-    val feedFetcher = HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}")
-    val feedCache = FeedCache(File(context.filesDir, "rss-cache"))
-    return DefaultRssRepository(settingsRepository.currentFeeds(), feedFetcher, feedCache, clock)
-}

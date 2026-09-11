@@ -171,11 +171,9 @@ open class ClockView @JvmOverloads constructor(
             return
         }
 
-        val bounds = listOfNotNull(
-            widthSize.takeIf { widthMode != MeasureSpec.UNSPECIFIED },
-            heightSize.takeIf { heightMode != MeasureSpec.UNSPECIFIED },
-        )
-        val square = bounds.min()
+        val boundedWidth = if (widthMode == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else widthSize
+        val boundedHeight = if (heightMode == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else heightSize
+        val square = minOf(boundedWidth, boundedHeight)
         setMeasuredDimension(square, square)
     }
 
