@@ -18,7 +18,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="@dimen/rss_bar_height"
         android:orientation="horizontal">
 
         <org.akinosoft.akinoclock.rss.ui.HeadlineCarouselView
@@ -29,7 +29,7 @@
 
         <ImageButton
             android:id="@+id/settingsButton"
-            android:layout_width="48dp"
+            android:layout_width="@dimen/settings_button_width"
             android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackground"
             android:src="@android:drawable/ic_menu_preferences"
