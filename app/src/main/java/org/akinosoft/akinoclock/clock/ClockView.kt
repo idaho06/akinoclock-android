@@ -14,6 +14,7 @@ import android.view.View
 import java.time.Clock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import org.akinosoft.akinoclock.R
 import org.akinosoft.akinoclock.util.PeriodicScheduler
 import org.akinosoft.akinoclock.util.SecondAlignedScheduler
 
@@ -151,6 +152,31 @@ open class ClockView @JvmOverloads constructor(
 
     fun stop() {
         tickScheduler.stop()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val widthMode = MeasureSpec.getMode(widthMeasureSpec)
+        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
+        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
+
+        if (widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY) {
+            setMeasuredDimension(widthSize, heightSize)
+            return
+        }
+
+        if (widthMode == MeasureSpec.UNSPECIFIED && heightMode == MeasureSpec.UNSPECIFIED) {
+            val defaultSize = resources.getDimensionPixelSize(R.dimen.clock_default_size)
+            setMeasuredDimension(defaultSize, defaultSize)
+            return
+        }
+
+        val bounds = listOfNotNull(
+            widthSize.takeIf { widthMode != MeasureSpec.UNSPECIFIED },
+            heightSize.takeIf { heightMode != MeasureSpec.UNSPECIFIED },
+        )
+        val square = bounds.min()
+        setMeasuredDimension(square, square)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

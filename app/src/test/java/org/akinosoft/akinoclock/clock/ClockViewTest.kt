@@ -8,7 +8,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.os.Looper
 import android.view.View
+import android.view.View.MeasureSpec
 import androidx.test.core.app.ApplicationProvider
+import org.akinosoft.akinoclock.R
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -182,5 +184,50 @@ class ClockViewTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(ClockTime(9, 15, 0), view.time)
+    }
+
+    @Test
+    fun `measure passes through when both dimensions are EXACTLY`() {
+        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
+        view.measure(
+            MeasureSpec.makeMeasureSpec(500, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(300, MeasureSpec.EXACTLY),
+        )
+        assertEquals(500, view.measuredWidth)
+        assertEquals(300, view.measuredHeight)
+    }
+
+    @Test
+    fun `measure with two AT_MOST bounds chooses the largest square that fits`() {
+        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
+        view.measure(
+            MeasureSpec.makeMeasureSpec(440, MeasureSpec.AT_MOST),
+            MeasureSpec.makeMeasureSpec(600, MeasureSpec.AT_MOST),
+        )
+        assertEquals(440, view.measuredWidth)
+        assertEquals(440, view.measuredHeight)
+    }
+
+    @Test
+    fun `measure with both dimensions UNSPECIFIED uses the default square size`() {
+        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
+        view.measure(
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+        )
+        val expected = context().resources.getDimensionPixelSize(R.dimen.clock_default_size)
+        assertEquals(expected, view.measuredWidth)
+        assertEquals(expected, view.measuredHeight)
+    }
+
+    @Test
+    fun `measure with an exact width and unspecified height sizes a square to the exact dimension`() {
+        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
+        view.measure(
+            MeasureSpec.makeMeasureSpec(350, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+        )
+        assertEquals(350, view.measuredWidth)
+        assertEquals(350, view.measuredHeight)
     }
 }

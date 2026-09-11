@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="clock_default_size">200dp</dimen>
+    <dimen name="rss_bar_height">72dp</dimen>
+    <dimen name="settings_button_width">48dp</dimen>
+</resources>
