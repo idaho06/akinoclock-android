@@ -10,6 +10,6 @@ tablet; not published to the Play Store.
 ./gradlew test                                  # all JVM unit tests (JUnit + Robolectric)
 ./gradlew assembleDebug                         # build the debug APK
 ./gradlew installDebug                          # install on the connected device
-adb shell am start -n org.akinosoft.akinoclock/.app.MainActivity
+adb shell am start -n org.akinosoft.akinoclock.debug/.app.MainActivity
 ./gradlew connectedDebugAndroidTest             # instrumented tests (rare, on-device)
 ```

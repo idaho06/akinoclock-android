@@ -2,6 +2,7 @@ package org.akinosoft.akinoclock.app
 
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
+import org.akinosoft.akinoclock.BuildConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -16,7 +17,7 @@ class AkinoClockAppTest {
         val app = ApplicationProvider.getApplicationContext<AkinoClockApp>()
 
         assertNotNull(app.container)
-        assertEquals("org.akinosoft.akinoclock", app.packageName)
+        assertEquals(BuildConfig.APPLICATION_ID, app.packageName)
     }
 
     @Test
