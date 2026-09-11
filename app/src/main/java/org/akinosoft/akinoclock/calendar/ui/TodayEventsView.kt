@@ -22,6 +22,8 @@ class TodayEventsView @JvmOverloads constructor(
 
     private val inflater = LayoutInflater.from(context)
 
+    var maxRows: Int = Int.MAX_VALUE
+
     init {
         orientation = VERTICAL
     }
@@ -32,7 +34,7 @@ class TodayEventsView @JvmOverloads constructor(
             addView(emptyStateView())
             return
         }
-        events.forEach { addView(eventRow(it, today)) }
+        events.take(maxRows).forEach { addView(eventRow(it, today)) }
     }
 
     private fun emptyStateView(): View =

@@ -101,6 +101,47 @@ class TodayEventsViewTest {
     }
 
     @Test
+    fun `more events than maxRows are capped to maxRows`() {
+        val events = (1..6).map { i ->
+            EventInstance(
+                id = i.toLong(), title = "Event $i",
+                start = ZonedDateTime.of(today, java.time.LocalTime.of(9, 0), ZoneOffset.UTC),
+                end = ZonedDateTime.of(today, java.time.LocalTime.of(9, 30), ZoneOffset.UTC),
+                allDay = false,
+            )
+        }
+        val v = view()
+        v.maxRows = 4
+
+        v.setEvents(events, today)
+
+        assertEquals(4, v.childCount)
+    }
+
+    @Test
+    fun `fewer events than maxRows creates one row per event`() {
+        val events = listOf(
+            EventInstance(
+                id = 1, title = "Standup",
+                start = ZonedDateTime.of(today, java.time.LocalTime.of(9, 0), ZoneOffset.UTC),
+                end = ZonedDateTime.of(today, java.time.LocalTime.of(9, 30), ZoneOffset.UTC),
+                allDay = false,
+            ),
+        )
+        val v = view()
+        v.maxRows = 6
+
+        v.setEvents(events, today)
+
+        assertEquals(1, v.childCount)
+    }
+
+    @Test
+    fun `maxRows defaults to Int MAX_VALUE when unset`() {
+        assertEquals(Int.MAX_VALUE, view().maxRows)
+    }
+
+    @Test
     fun `an empty list shows the empty-state text view`() {
         val v = view()
 
