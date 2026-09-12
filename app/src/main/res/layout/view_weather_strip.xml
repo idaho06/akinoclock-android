@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ImageView
+        android:id="@+id/todayIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_vertical" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/todayTemp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="26sp" />
+
+        <TextView
+            android:id="@+id/todayMinMax"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+    <include
+        android:id="@+id/forecastDay1"
+        layout="@layout/item_forecast_day" />
+
+    <include
+        android:id="@+id/forecastDay2"
+        layout="@layout/item_forecast_day" />
+
+    <TextView
+        android:id="@+id/staleGlyph"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:text="@string/weather_stale_glyph"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/placeholderText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/weather_no_location_placeholder"
+        android:visibility="gone" />
+
+</merge>
