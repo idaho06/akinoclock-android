@@ -55,7 +55,7 @@ class DefaultWeatherRepository(
 
     override suspend fun refresh(location: WeatherLocation): WeatherRefreshOutcome = withContext(mutationDispatcher) {
         val url = forecastUrl(location)
-        when (val result = withContext(ioDispatcher) { fetcher.fetch(url, ifModifiedSinceMillis = null) }) {
+        when (val result = fetcher.fetch(url, ifModifiedSinceMillis = null)) {
             is FetchResult.Success -> {
                 val report = parseOrNull(result.bytes, Instant.now(clock))
                 if (report == null) {
