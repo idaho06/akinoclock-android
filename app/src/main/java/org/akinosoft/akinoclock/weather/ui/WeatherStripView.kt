@@ -25,6 +25,7 @@ class WeatherStripView @JvmOverloads constructor(
     var onPlaceholderClick: (() -> Unit)? = null
 
     private val todayIcon: ImageView
+    private val todayColumn: View
     private val todayTemp: TextView
     private val todayMinMax: TextView
     private val forecastDay1: View
@@ -39,6 +40,7 @@ class WeatherStripView @JvmOverloads constructor(
         LayoutInflater.from(context).inflate(R.layout.view_weather_strip, this, true)
 
         todayIcon = findViewById(R.id.todayIcon)
+        todayColumn = findViewById(R.id.todayColumn)
         todayTemp = findViewById(R.id.todayTemp)
         todayMinMax = findViewById(R.id.todayMinMax)
         forecastDay1 = findViewById(R.id.forecastDay1)
@@ -46,7 +48,7 @@ class WeatherStripView @JvmOverloads constructor(
         staleGlyph = findViewById(R.id.staleGlyph)
         placeholderText = findViewById(R.id.placeholderText)
 
-        content = listOf(todayIcon, todayTemp.parent as View, forecastDay1, forecastDay2, staleGlyph)
+        content = listOf(todayIcon, todayColumn, forecastDay1, forecastDay2, staleGlyph)
         placeholderText.setOnClickListener { onPlaceholderClick?.invoke() }
     }
 
