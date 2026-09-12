@@ -63,6 +63,31 @@ class DefaultWeatherRepositoryTest {
     }
 
     @Test
+    fun `priming a second location after the first loads that location's cached report`() = runTest {
+        val cache = cache()
+        val paris = WeatherLocation("Paris, France", 48.8566, 2.3522)
+        val parisJson = """
+            {"current":{"temperature_2m":9.4,"weather_code":0,"is_day":0},
+             "daily":{"time":["2026-09-12","2026-09-13","2026-09-14"],"weather_code":[1,1,1],
+                      "temperature_2m_max":[12.5,13.1,13.8],"temperature_2m_min":[5.9,7.1,7.4]}}
+        """.trimIndent().toByteArray()
+        cache.write(urlFor(madrid), forecastJson)
+        cache.write(urlFor(paris), parisJson)
+        val fetcher = mockk<HttpFetcher>()
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = DefaultWeatherRepository(fetcher, cache, fixedClock, dispatcher)
+
+        repository.primeFromCache(madrid)
+        advanceUntilIdle()
+        assertEquals(20.1, repository.report().first()!!.current.temperatureC, 0.0)
+
+        repository.primeFromCache(paris)
+        advanceUntilIdle()
+
+        assertEquals(9.4, repository.report().first()!!.current.temperatureC, 0.0)
+    }
+
+    @Test
     fun `refresh success writes cache and emits the report`() = runTest {
         val cache = cache()
         val fetcher = mockk<HttpFetcher>()

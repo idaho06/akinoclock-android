@@ -37,15 +37,15 @@ class DefaultWeatherRepository(
     private val _report = MutableStateFlow<WeatherReport?>(null)
     private val mutationDispatcher = ioDispatcher.limitedParallelism(1)
     private val scope = CoroutineScope(SupervisorJob() + mutationDispatcher)
-    private var primed = false
+    private var primedUrl: String? = null
     private var lastUrl: String? = null
 
     override fun report(): Flow<WeatherReport?> = _report.asStateFlow()
 
     override fun primeFromCache(location: WeatherLocation) {
-        if (primed) return
-        primed = true
         val url = forecastUrl(location)
+        if (url == primedUrl) return
+        primedUrl = url
         lastUrl = url
         scope.launch {
             val cached = cache.read(url) ?: return@launch
