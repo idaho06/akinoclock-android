@@ -23,6 +23,7 @@ import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.rss.model.FeedStatus
 import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.model.RssUiState
+import org.akinosoft.akinoclock.util.RefreshBackoff
 
 /**
  * Drives [RssRepository.refresh] on a schedule while [start]ed: immediately if the feed list
@@ -51,7 +52,7 @@ class RssViewModel(
 
     private var lastSuccess: Instant? = null
     private var lastRefreshedFeeds: List<FeedConfig>? = null
-    private var backoffIndex = -1
+    private val backoff = RefreshBackoff(NORMAL_INTERVAL)
 
     private var observeJob: Job? = null
     private var schedulingJob: Job? = null
@@ -85,7 +86,7 @@ class RssViewModel(
     private suspend fun schedulingLoop() {
         feedsState.collectLatest { feeds ->
             if (feeds.isEmpty()) return@collectLatest
-            if (feeds != lastRefreshedFeeds) backoffIndex = -1
+            if (feeds != lastRefreshedFeeds) backoff.reset()
             if (isDueForImmediateRefresh(feeds)) doRefresh(feeds)
             while (true) {
                 delay(nextDelayMillis())
@@ -103,18 +104,15 @@ class RssViewModel(
     private fun olderThan(instant: Instant, threshold: Duration): Boolean =
         Duration.between(instant, Instant.now(clock)) >= threshold
 
-    private fun nextDelayMillis(): Long {
-        val minutes = if (backoffIndex >= 0) BACKOFF_MINUTES[backoffIndex] else NORMAL_INTERVAL.toMinutes()
-        return Duration.ofMinutes(minutes).toMillis()
-    }
+    private fun nextDelayMillis(): Long = backoff.nextDelay().toMillis()
 
     private suspend fun doRefresh(feeds: List<FeedConfig>) {
         val outcome = repository.refresh(feeds)
         lastRefreshedFeeds = feeds
         if (outcome == RefreshOutcome.ALL_FAILED) {
-            backoffIndex = (backoffIndex + 1).coerceAtMost(BACKOFF_MINUTES.lastIndex)
+            backoff.onFailure()
         } else {
-            backoffIndex = -1
+            backoff.onSuccess()
             lastSuccess = Instant.now(clock)
         }
     }
@@ -152,6 +150,5 @@ class RssViewModel(
         val NORMAL_INTERVAL: Duration = Duration.ofMinutes(30)
         val IMMEDIATE_REFRESH_THRESHOLD: Duration = Duration.ofMinutes(5)
         val STALE_THRESHOLD: Duration = NORMAL_INTERVAL.multipliedBy(2)
-        val BACKOFF_MINUTES = listOf(1L, 2L, 4L, 8L, 15L)
     }
 }
