@@ -25,7 +25,9 @@
         <org.akinosoft.akinoclock.weather.ui.WeatherStripView
             android:id="@+id/weatherStrip"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/weather_strip_height" />
+            android:layout_height="@dimen/weather_strip_height"
+            android:layout_marginTop="@dimen/weather_strip_margin_top"
+            android:layout_marginBottom="@dimen/weather_strip_margin_bottom" />
 
         <LinearLayout
             android:layout_width="match_parent"

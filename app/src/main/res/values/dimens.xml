@@ -4,4 +4,6 @@
     <dimen name="rss_bar_height">72dp</dimen>
     <dimen name="settings_button_width">48dp</dimen>
     <dimen name="weather_strip_height">80dp</dimen>
+    <dimen name="weather_strip_margin_top">8dp</dimen>
+    <dimen name="weather_strip_margin_bottom">32dp</dimen>
 </resources>
