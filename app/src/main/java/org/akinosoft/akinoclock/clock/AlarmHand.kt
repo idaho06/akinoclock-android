@@ -15,7 +15,7 @@ object AlarmHand {
     fun angleDeg(now: Instant, alarm: Instant?, zone: ZoneId): Float? {
         if (alarm == null) return null
         val untilAlarm = Duration.between(now, alarm)
-        if (untilAlarm.isNegative || untilAlarm.isZero || untilAlarm > WINDOW) return null
+        if (untilAlarm <= Duration.ZERO || untilAlarm > WINDOW) return null
         val wallTime = alarm.atZone(zone)
         return ClockTime(wallTime.hour, wallTime.minute, 0).toHandAngles().hourDeg
     }

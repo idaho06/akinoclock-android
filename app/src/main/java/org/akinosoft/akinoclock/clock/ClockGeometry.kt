@@ -75,15 +75,20 @@ object ClockGeometry {
     fun tipSegment(kind: HandKind, r: Float): TipSegment {
         require(kind != HandKind.SECOND) { "the second hand has no tip color segment" }
         val rect = handRect(kind, r)
-        if (kind == HandKind.ALARM) {
-            return TipSegment(startY = rect.tipY, endY = rect.tipY + 0.08f * r, width = 0.05f * r)
+        // The alarm hand's pill sits flush against the stem's tip (no inward margin) and is
+        // wider than the stem, unlike the hour/minute tip zones which are inset and narrower.
+        val zoneLength = when (kind) {
+            HandKind.HOUR -> 0.18f * r
+            HandKind.MINUTE -> 0.22f * r
+            HandKind.ALARM -> 0.08f * r
+            HandKind.SECOND -> error("unreachable: rejected above")
         }
-        val zoneLength = if (kind == HandKind.HOUR) 0.18f * r else 0.22f * r
-        val margin = TIP_MARGIN_RATIO * r
+        val margin = if (kind == HandKind.ALARM) 0f else TIP_MARGIN_RATIO * r
+        val widthRatio = if (kind == HandKind.ALARM) 2.5f else TIP_WIDTH_RATIO
         return TipSegment(
             startY = rect.tipY + margin,
             endY = rect.tipY + zoneLength - margin,
-            width = rect.width * TIP_WIDTH_RATIO,
+            width = rect.width * widthRatio,
         )
     }
 

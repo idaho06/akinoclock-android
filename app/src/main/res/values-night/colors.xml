@@ -9,6 +9,9 @@
     <color name="hand_tip">#C9E6C0</color>
     <color name="second_hand">#F5C400</color>
     <color name="center_cap_ring">#101010</color>
+    <!-- Deliberately its own tone, not @color/tick_minute: dark here, bright in values/,
+         the inverse of tick_minute's similar brightness in both themes. -->
+    <color name="alarm_hand">#4A4A4A</color>
 
     <color name="background">#101010</color>
 

@@ -25,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 
@@ -105,6 +106,19 @@ class ClockViewTest {
     }
 
     @Test
+    fun `palette alarmHand is bright in the light theme and dark in the dark theme`() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        val lightAlarmHand = context().getColor(R.color.alarm_hand)
+
+        RuntimeEnvironment.setQualifiers("+night")
+        val nightAlarmHand = context().getColor(R.color.alarm_hand)
+
+        assertTrue(luminance(lightAlarmHand) > luminance(nightAlarmHand))
+    }
+
+    private fun luminance(color: Int): Int = Color.red(color) + Color.green(color) + Color.blue(color)
+
+    @Test
     fun `dial renders background color and yellow second hand`() {
         val view = TestableClockView(context(), fixedClock(12, 0, 15), FakePeriodicScheduler())
         view.layout(0, 0, 200, 200)
@@ -126,6 +140,122 @@ class ClockViewTest {
         val dg = Color.green(a) - Color.green(b)
         val db = Color.blue(a) - Color.blue(b)
         return dr * dr + dg * dg + db * db
+    }
+
+    /** Nearest match to `target` in a square neighborhood around (cx, cy), radius in pixels. */
+    private fun closestInNeighborhood(bitmap: Bitmap, cx: Int, cy: Int, radius: Int, target: Int): Int {
+        var best = bitmap.getPixel(cx, cy)
+        var bestDistance = colorDistance(best, target)
+        for (dx in -radius..radius) {
+            for (dy in -radius..radius) {
+                val x = cx + dx
+                val y = cy + dy
+                if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) continue
+                val candidate = bitmap.getPixel(x, y)
+                val distance = colorDistance(candidate, target)
+                if (distance < bestDistance) {
+                    best = candidate
+                    bestDistance = distance
+                }
+            }
+        }
+        return best
+    }
+
+    @Test
+    fun `alarm hand pill is drawn straight down when the alarm is 1 hour away`() {
+        val clock = fixedClock(5, 0, 0)
+        val view = TestableClockView(context(), clock, FakePeriodicScheduler())
+        view.nextAlarm = LocalDateTime.of(2024, 1, 1, 6, 0, 0).toInstant(ZoneOffset.UTC)
+        view.layout(0, 0, 200, 200)
+
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
+
+        val palette = view.palette
+        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.handTip)
+        assertTrue(colorDistance(closest, palette.handTip) < colorDistance(closest, palette.dialBackground))
+    }
+
+    @Test
+    fun `alarm hand is hidden when the alarm is more than 12 hours away`() {
+        val clock = fixedClock(5, 0, 0)
+        val view = TestableClockView(context(), clock, FakePeriodicScheduler())
+        view.nextAlarm = LocalDateTime.of(2024, 1, 1, 18, 30, 0).toInstant(ZoneOffset.UTC)
+        view.layout(0, 0, 200, 200)
+
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
+
+        val palette = view.palette
+        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.handTip)
+        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.handTip))
+    }
+
+    @Test
+    fun `alarm hand is hidden when there is no next alarm`() {
+        val view = TestableClockView(context(), fixedClock(5, 0, 0), FakePeriodicScheduler())
+        view.layout(0, 0, 200, 200)
+
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
+
+        val palette = view.palette
+        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.handTip)
+        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.handTip))
+    }
+
+    @Test
+    fun `alarm hand appears from time passing alone, crossing the 12 hour window without touching nextAlarm`() {
+        val fake = FakePeriodicScheduler()
+        val clock = mutableClock(5, 0, 0)
+        val view = TestableClockView(context(), clock, fake)
+        view.nextAlarm = LocalDateTime.of(2024, 1, 1, 18, 30, 0).toInstant(ZoneOffset.UTC)
+        view.layout(0, 0, 200, 200)
+        view.start()
+
+        // At 195 degrees (18:30 on a 12-hour dial), the pill's mid-radius (0.56r) point is at
+        // (cx + 100*sin(195deg), cy - 100*cos(195deg)) = (100 - 14.5, 100 + 54.1).
+        val pillX = 86
+        val pillY = 154
+
+        var bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
+        var palette = view.palette
+        var closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.handTip)
+        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.handTip))
+
+        // Advance to 08:00 (10.5h from the alarm), comfortably past the 12h boundary.
+        clock.advanceTo(LocalDateTime.of(2024, 1, 1, 8, 0, 0).toInstant(ZoneOffset.UTC))
+        fake.fireTick()
+
+        bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
+        palette = view.palette
+        closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.handTip)
+        assertTrue(colorDistance(closest, palette.handTip) < colorDistance(closest, palette.dialBackground))
+    }
+
+    @Test
+    fun `content description appends the alarm time while the hand is shown`() {
+        val view = TestableClockView(context(), fixedClock(5, 0, 0), FakePeriodicScheduler())
+        assertEquals("05:00", view.contentDescription)
+
+        view.nextAlarm = LocalDateTime.of(2024, 1, 1, 6, 0, 0).toInstant(ZoneOffset.UTC)
+        assertEquals("05:00, alarm 06:00", view.contentDescription)
+
+        view.nextAlarm = null
+        assertEquals("05:00", view.contentDescription)
+    }
+
+    @Test
+    fun `setting nextAlarm invalidates exactly once`() {
+        val view = TestableClockView(context(), fixedClock(5, 0, 0), FakePeriodicScheduler())
+        val before = view.invalidateCount
+
+        view.nextAlarm = LocalDateTime.of(2024, 1, 1, 6, 0, 0).toInstant(ZoneOffset.UTC)
+
+        assertEquals(before + 1, view.invalidateCount)
     }
 
     @Test

@@ -12,6 +12,7 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.view.View
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import org.akinosoft.akinoclock.R
@@ -51,6 +52,15 @@ open class ClockView @JvmOverloads constructor(
     var time: ClockTime = readTime()
         private set
 
+    var nextAlarm: Instant? = null
+        set(value) {
+            field = value
+            // Bypass the per-minute guard, same as the `clock` setter: the alarm hand's
+            // visibility can change independently of the wall-clock minute.
+            setContentDescriptionFromTime()
+            invalidate()
+        }
+
     private var lastDescriptionMinute: Int = -1
 
     init {
@@ -80,8 +90,17 @@ open class ClockView @JvmOverloads constructor(
 
     private fun setContentDescriptionFromTime() {
         lastDescriptionMinute = time.minute
-        contentDescription = LocalTime.of(time.hour, time.minute).format(DESCRIPTION_FORMATTER)
+        val base = LocalTime.of(time.hour, time.minute).format(DESCRIPTION_FORMATTER)
+        contentDescription = if (alarmAngleDeg() != null) {
+            val alarmWall = nextAlarm!!.atZone(clock.zone)
+            val alarmText = LocalTime.of(alarmWall.hour, alarmWall.minute).format(DESCRIPTION_FORMATTER)
+            resources.getString(R.string.clock_alarm_description_format, base, alarmText)
+        } else {
+            base
+        }
     }
+
+    private fun alarmAngleDeg(): Float? = AlarmHand.angleDeg(clock.instant(), nextAlarm, clock.zone)
 
     private var dialBitmap: Bitmap? = null
     private var radius = 0f
@@ -94,6 +113,7 @@ open class ClockView @JvmOverloads constructor(
     private val numeralPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val handBatonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val handTipPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
+    private val alarmHandPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val secondHandPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val centerCapRingPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val centerCapPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -234,19 +254,20 @@ open class ClockView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         dialBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
 
+        alarmAngleDeg()?.let { drawTippedHand(canvas, HandKind.ALARM, it, alarmHandPaint, palette.alarmHand) }
         val angles = time.toHandAngles()
-        drawTippedHand(canvas, HandKind.HOUR, angles.hourDeg)
-        drawTippedHand(canvas, HandKind.MINUTE, angles.minuteDeg)
+        drawTippedHand(canvas, HandKind.HOUR, angles.hourDeg, handBatonPaint, palette.handBaton)
+        drawTippedHand(canvas, HandKind.MINUTE, angles.minuteDeg, handBatonPaint, palette.handBaton)
         drawSecondHand(canvas, angles.secondDeg)
         drawCenterCap(canvas)
     }
 
-    private fun drawTippedHand(canvas: Canvas, kind: HandKind, angleDeg: Float) {
+    private fun drawTippedHand(canvas: Canvas, kind: HandKind, angleDeg: Float, batonPaint: Paint, batonColor: Int) {
         val rect = ClockGeometry.handRect(kind, radius)
         canvas.save()
         canvas.rotate(angleDeg, centerX, centerY)
 
-        drawHandLine(canvas, rect.tailY, rect.tipY, rect.width, handBatonPaint, palette.handBaton)
+        drawHandLine(canvas, rect.tailY, rect.tipY, rect.width, batonPaint, batonColor)
 
         val tip = ClockGeometry.tipSegment(kind, radius)
         drawHandLine(canvas, tip.startY, tip.endY, tip.width, handTipPaint, palette.handTip)

@@ -9,6 +9,7 @@
     <string name="rss_no_headlines">No headlines — add feeds in settings</string>
     <string name="rss_stale_glyph">⚠</string>
     <string name="rss_no_browser">No browser app found to open this link</string>
+    <string name="clock_alarm_description_format">%1$s, alarm %2$s</string>
 
     <string name="settings_open">Settings</string>
     <string name="settings_title">Settings</string>

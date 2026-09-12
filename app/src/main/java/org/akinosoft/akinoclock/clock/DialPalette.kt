@@ -12,6 +12,7 @@ data class DialPalette(
     val handTip: Int,
     val secondHand: Int,
     val centerCapRing: Int,
+    val alarmHand: Int,
 ) {
     companion object {
         fun fromResources(context: Context): DialPalette = DialPalette(
@@ -23,6 +24,7 @@ data class DialPalette(
             handTip = context.getColor(R.color.hand_tip),
             secondHand = context.getColor(R.color.second_hand),
             centerCapRing = context.getColor(R.color.center_cap_ring),
+            alarmHand = context.getColor(R.color.alarm_hand),
         )
     }
 }
