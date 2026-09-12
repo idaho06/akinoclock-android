@@ -152,20 +152,19 @@ class ClockGeometryTest {
     }
 
     @Test
-    fun `handRect for alarm hand is a thin short stem from the center`() {
+    fun `handRect for alarm hand is a short stem from the center, as thick as the hour hand`() {
         val rect = ClockGeometry.handRect(HandKind.ALARM, r)
-        assertEquals(2f, rect.width, 0.01f)
+        assertEquals(ClockGeometry.handRect(HandKind.HOUR, r).width, rect.width, 0.01f)
         assertEquals(0f, rect.tailY, 0.01f)
         assertEquals(-60f, rect.tipY, 0.01f)
     }
 
     @Test
-    fun `tipSegment for alarm hand is a pill wider than the stem covering the outer 0-08R`() {
+    fun `tipSegment for alarm hand is a pill the same thickness as the stem, covering the outer 0-08R`() {
         val tip = ClockGeometry.tipSegment(HandKind.ALARM, r)
         assertEquals(-60f, tip.startY, 0.01f)
         assertEquals(-52f, tip.endY, 0.01f)
-        assertEquals(5f, tip.width, 0.01f)
-        assertTrue(tip.width > ClockGeometry.handRect(HandKind.ALARM, r).width)
+        assertEquals(ClockGeometry.handRect(HandKind.ALARM, r).width, tip.width, 0.01f)
     }
 
     @Test
@@ -173,11 +172,11 @@ class ClockGeometryTest {
         val doubleR = r * 2f
         val rect = ClockGeometry.handRect(HandKind.ALARM, doubleR)
         val tip = ClockGeometry.tipSegment(HandKind.ALARM, doubleR)
-        assertEquals(4f, rect.width, 0.01f)
+        assertEquals(ClockGeometry.handRect(HandKind.HOUR, doubleR).width, rect.width, 0.01f)
         assertEquals(-120f, rect.tipY, 0.01f)
         assertEquals(-120f, tip.startY, 0.01f)
         assertEquals(-104f, tip.endY, 0.01f)
-        assertEquals(10f, tip.width, 0.01f)
+        assertEquals(rect.width, tip.width, 0.01f)
     }
 
     @Test

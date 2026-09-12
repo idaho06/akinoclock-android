@@ -12,6 +12,9 @@
     <!-- Deliberately its own tone, not @color/tick_minute: bright here, dark in values-night,
          the inverse of tick_minute's similar brightness in both themes. -->
     <color name="alarm_hand">#C4C4C4</color>
+    <!-- Darker, more saturated green than @color/hand_tip so the alarm pill reads as a
+         distinct accent from the hour/minute tips. -->
+    <color name="alarm_tip">#4F7A4C</color>
 
     <color name="background">#F4F4F2</color>
 

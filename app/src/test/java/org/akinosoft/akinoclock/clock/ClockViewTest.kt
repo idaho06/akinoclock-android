@@ -173,8 +173,8 @@ class ClockViewTest {
         view.draw(Canvas(bitmap))
 
         val palette = view.palette
-        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.handTip)
-        assertTrue(colorDistance(closest, palette.handTip) < colorDistance(closest, palette.dialBackground))
+        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.alarmTip)
+        assertTrue(colorDistance(closest, palette.alarmTip) < colorDistance(closest, palette.dialBackground))
     }
 
     @Test
@@ -188,8 +188,8 @@ class ClockViewTest {
         view.draw(Canvas(bitmap))
 
         val palette = view.palette
-        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.handTip)
-        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.handTip))
+        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.alarmTip)
+        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.alarmTip))
     }
 
     @Test
@@ -201,8 +201,8 @@ class ClockViewTest {
         view.draw(Canvas(bitmap))
 
         val palette = view.palette
-        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.handTip)
-        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.handTip))
+        val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.alarmTip)
+        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.alarmTip))
     }
 
     @Test
@@ -222,8 +222,8 @@ class ClockViewTest {
         var bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
         view.draw(Canvas(bitmap))
         var palette = view.palette
-        var closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.handTip)
-        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.handTip))
+        var closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.alarmTip)
+        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.alarmTip))
 
         // Advance to 08:00 (10.5h from the alarm), comfortably past the 12h boundary.
         clock.advanceTo(LocalDateTime.of(2024, 1, 1, 8, 0, 0).toInstant(ZoneOffset.UTC))
@@ -232,8 +232,8 @@ class ClockViewTest {
         bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
         view.draw(Canvas(bitmap))
         palette = view.palette
-        closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.handTip)
-        assertTrue(colorDistance(closest, palette.handTip) < colorDistance(closest, palette.dialBackground))
+        closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.alarmTip)
+        assertTrue(colorDistance(closest, palette.alarmTip) < colorDistance(closest, palette.dialBackground))
     }
 
     @Test

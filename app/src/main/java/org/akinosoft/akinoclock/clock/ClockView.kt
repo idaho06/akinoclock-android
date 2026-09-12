@@ -254,15 +254,24 @@ open class ClockView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         dialBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
 
-        alarmAngleDeg()?.let { drawTippedHand(canvas, HandKind.ALARM, it, alarmHandPaint, palette.alarmHand) }
+        alarmAngleDeg()?.let {
+            drawTippedHand(canvas, HandKind.ALARM, it, alarmHandPaint, palette.alarmHand, palette.alarmTip)
+        }
         val angles = time.toHandAngles()
-        drawTippedHand(canvas, HandKind.HOUR, angles.hourDeg, handBatonPaint, palette.handBaton)
-        drawTippedHand(canvas, HandKind.MINUTE, angles.minuteDeg, handBatonPaint, palette.handBaton)
+        drawTippedHand(canvas, HandKind.HOUR, angles.hourDeg, handBatonPaint, palette.handBaton, palette.handTip)
+        drawTippedHand(canvas, HandKind.MINUTE, angles.minuteDeg, handBatonPaint, palette.handBaton, palette.handTip)
         drawSecondHand(canvas, angles.secondDeg)
         drawCenterCap(canvas)
     }
 
-    private fun drawTippedHand(canvas: Canvas, kind: HandKind, angleDeg: Float, batonPaint: Paint, batonColor: Int) {
+    private fun drawTippedHand(
+        canvas: Canvas,
+        kind: HandKind,
+        angleDeg: Float,
+        batonPaint: Paint,
+        batonColor: Int,
+        tipColor: Int,
+    ) {
         val rect = ClockGeometry.handRect(kind, radius)
         canvas.save()
         canvas.rotate(angleDeg, centerX, centerY)
@@ -270,7 +279,7 @@ open class ClockView @JvmOverloads constructor(
         drawHandLine(canvas, rect.tailY, rect.tipY, rect.width, batonPaint, batonColor)
 
         val tip = ClockGeometry.tipSegment(kind, radius)
-        drawHandLine(canvas, tip.startY, tip.endY, tip.width, handTipPaint, palette.handTip)
+        drawHandLine(canvas, tip.startY, tip.endY, tip.width, handTipPaint, tipColor)
 
         canvas.restore()
     }

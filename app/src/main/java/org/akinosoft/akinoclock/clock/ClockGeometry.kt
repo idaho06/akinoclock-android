@@ -26,6 +26,7 @@ object ClockGeometry {
     private const val CENTER_CAP_RATIO = 0.045f
     private const val TIP_MARGIN_RATIO = 0.03f
     private const val TIP_WIDTH_RATIO = 0.6f
+    private const val BATON_WIDTH_RATIO = 0.06f
 
     private fun isHourIndex(index: Int): Boolean = index % 5 == 0
 
@@ -66,29 +67,27 @@ object ClockGeometry {
         pointOnCircle((hour12 % 12) * 30.0, r * NUMERAL_RADIUS_RATIO)
 
     fun handRect(kind: HandKind, r: Float): HandRect = when (kind) {
-        HandKind.HOUR -> HandRect(width = 0.06f * r, tailY = 0.08f * r, tipY = -0.50f * r)
+        HandKind.HOUR -> HandRect(width = BATON_WIDTH_RATIO * r, tailY = 0.08f * r, tipY = -0.50f * r)
         HandKind.MINUTE -> HandRect(width = 0.05f * r, tailY = 0.08f * r, tipY = -0.74f * r)
         HandKind.SECOND -> HandRect(width = 0.012f * r, tailY = 0.18f * r, tipY = -0.80f * r)
-        HandKind.ALARM -> HandRect(width = 0.02f * r, tailY = 0f, tipY = -0.60f * r)
+        HandKind.ALARM -> HandRect(width = BATON_WIDTH_RATIO * r, tailY = 0f, tipY = -0.60f * r)
     }
 
     fun tipSegment(kind: HandKind, r: Float): TipSegment {
         require(kind != HandKind.SECOND) { "the second hand has no tip color segment" }
         val rect = handRect(kind, r)
-        // The alarm hand's pill sits flush against the stem's tip (no inward margin) and is
-        // wider than the stem, unlike the hour/minute tip zones which are inset and narrower.
-        val zoneLength = when (kind) {
-            HandKind.HOUR -> 0.18f * r
-            HandKind.MINUTE -> 0.22f * r
-            HandKind.ALARM -> 0.08f * r
-            HandKind.SECOND -> error("unreachable: rejected above")
+        if (kind == HandKind.ALARM) {
+            // The alarm hand's pill is just the stem's tip rectangle: flush against the tip
+            // (no inward margin) and the same thickness as the stem, unlike the hour/minute tip
+            // zones below, which are inset and narrower than their own stem.
+            return TipSegment(startY = rect.tipY, endY = rect.tipY + 0.08f * r, width = rect.width)
         }
-        val margin = if (kind == HandKind.ALARM) 0f else TIP_MARGIN_RATIO * r
-        val widthRatio = if (kind == HandKind.ALARM) 2.5f else TIP_WIDTH_RATIO
+        val zoneLength = if (kind == HandKind.HOUR) 0.18f * r else 0.22f * r
+        val margin = TIP_MARGIN_RATIO * r
         return TipSegment(
             startY = rect.tipY + margin,
             endY = rect.tipY + zoneLength - margin,
-            width = rect.width * widthRatio,
+            width = rect.width * TIP_WIDTH_RATIO,
         )
     }
 
