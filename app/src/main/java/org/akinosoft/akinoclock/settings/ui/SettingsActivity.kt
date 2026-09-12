@@ -20,7 +20,7 @@ import org.akinosoft.akinoclock.weather.model.WeatherLocation
 
 class SettingsActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivitySettingsBinding
+    internal lateinit var binding: ActivitySettingsBinding
     private lateinit var feedAdapter: FeedListAdapter
     private var locationSearchDialog: android.app.AlertDialog? = null
 
@@ -75,6 +75,11 @@ class SettingsActivity : ComponentActivity() {
                 launch { viewModel.searchResult.collect(::handleSearchResult) }
             }
         }
+    }
+
+    override fun onDestroy() {
+        locationSearchDialog?.dismiss()
+        super.onDestroy()
     }
 
     private fun renderFeeds(feeds: List<FeedConfig>) {
