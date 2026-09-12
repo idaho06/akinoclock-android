@@ -46,18 +46,17 @@ class WeatherViewModel(
     private var lastRefreshedLocation: WeatherLocation? = null
     private val backoff = RefreshBackoff(NORMAL_INTERVAL)
 
-    // A failed refresh doesn't change the repository's report() value (the old report is kept
-    // as-is), so backoff.isBackingOff() alone would never trigger a recompute below — this flow
-    // is the thing that actually carries "the latest attempt failed" into combine().
-    private val backingOff = MutableStateFlow(false)
-
     private var observeJob: Job? = null
     private var schedulingJob: Job? = null
 
     fun start() {
         if (observeJob?.isActive != true) {
             observeJob = viewModelScope.launch {
-                combine(locationState, repository.report(), backingOff, ::computeState).collect { _uiState.value = it }
+                // A failed refresh doesn't change the repository's report() value (the old report
+                // is kept as-is), so backoff.isBackingOffFlow is what actually carries "the latest
+                // attempt failed" into this recompute.
+                combine(locationState, repository.report(), backoff.isBackingOffFlow, ::computeState)
+                    .collect { _uiState.value = it }
             }
         }
         if (schedulingJob?.isActive != true) {
@@ -107,7 +106,6 @@ class WeatherViewModel(
             backoff.onSuccess()
             lastSuccess = Instant.now(clock)
         }
-        backingOff.value = backoff.isBackingOff()
     }
 
     private fun computeState(location: WeatherLocation?, report: WeatherReport?, backingOff: Boolean): WeatherUiState =

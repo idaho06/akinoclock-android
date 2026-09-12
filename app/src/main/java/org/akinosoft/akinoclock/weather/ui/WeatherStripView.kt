@@ -90,8 +90,10 @@ class WeatherStripView @JvmOverloads constructor(
 
     private fun ImageView.setIcon(condition: org.akinosoft.akinoclock.weather.model.WeatherCondition, isDay: Boolean) {
         val res = WeatherIcons.drawableRes(condition, isDay)
-        setImageResource(res)
-        tag = res
+        if (tag != res) {
+            setImageResource(res)
+            tag = res
+        }
     }
 
     private companion object {
