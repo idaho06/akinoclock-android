@@ -85,17 +85,25 @@ class WeatherStripViewTest {
         assertEquals(android.view.View.VISIBLE, view.findViewById<android.view.View>(R.id.placeholderText).visibility)
         assertEquals(android.view.View.GONE, view.findViewById<android.view.View>(R.id.todayIcon).visibility)
         assertEquals(android.view.View.GONE, view.findViewById<android.view.View>(R.id.staleGlyph).visibility)
+        assertEquals(
+            view.context.getString(R.string.weather_no_location_placeholder),
+            view.findViewById<TextView>(R.id.placeholderText).text.toString(),
+        )
 
         view.findViewById<android.view.View>(R.id.placeholderText).performClick()
         assertTrue(clicked)
     }
 
     @Test
-    fun `Loading shows nothing`() {
+    fun `Loading shows a loading placeholder instead of a blank strip`() {
         view.render(WeatherUiState.Loading)
 
         assertEquals(android.view.View.GONE, view.findViewById<android.view.View>(R.id.todayIcon).visibility)
-        assertEquals(android.view.View.GONE, view.findViewById<android.view.View>(R.id.placeholderText).visibility)
+        assertEquals(android.view.View.VISIBLE, view.findViewById<android.view.View>(R.id.placeholderText).visibility)
         assertEquals(android.view.View.GONE, view.findViewById<android.view.View>(R.id.staleGlyph).visibility)
+        assertEquals(
+            view.context.getString(R.string.weather_loading_placeholder),
+            view.findViewById<TextView>(R.id.placeholderText).text.toString(),
+        )
     }
 }

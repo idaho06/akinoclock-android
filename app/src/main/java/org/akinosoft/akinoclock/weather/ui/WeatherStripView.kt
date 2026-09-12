@@ -31,7 +31,7 @@ class WeatherStripView @JvmOverloads constructor(
     private val forecastDay1: View
     private val forecastDay2: View
     private val staleGlyph: View
-    private val placeholderText: View
+    private val placeholderText: TextView
 
     private val content: List<View>
 
@@ -54,8 +54,14 @@ class WeatherStripView @JvmOverloads constructor(
 
     fun render(state: WeatherUiState) {
         when (state) {
-            WeatherUiState.NoLocation -> showOnly(placeholderText)
-            WeatherUiState.Loading -> showOnly()
+            WeatherUiState.NoLocation -> {
+                placeholderText.setText(R.string.weather_no_location_placeholder)
+                showOnly(placeholderText)
+            }
+            WeatherUiState.Loading -> {
+                placeholderText.setText(R.string.weather_loading_placeholder)
+                showOnly(placeholderText)
+            }
             is WeatherUiState.Showing -> {
                 showOnly(*content.toTypedArray())
                 staleGlyph.visibility = if (state.stale) VISIBLE else GONE

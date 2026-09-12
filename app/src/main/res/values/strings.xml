@@ -34,6 +34,7 @@
     <string name="weather_min_max_format">%1$d° / %2$d°</string>
     <string name="weather_stale_glyph">⚠</string>
     <string name="weather_no_location_placeholder">Set a location in settings to see the weather</string>
+    <string name="weather_loading_placeholder">Loading weather…</string>
 
     <string name="settings_weather_location_title">Weather location</string>
     <string name="settings_weather_location_not_set">Not set</string>
