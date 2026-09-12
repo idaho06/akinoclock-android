@@ -34,4 +34,13 @@
     <string name="weather_min_max_format">%1$d° / %2$d°</string>
     <string name="weather_stale_glyph">⚠</string>
     <string name="weather_no_location_placeholder">Set a location in settings to see the weather</string>
+
+    <string name="settings_weather_location_title">Weather location</string>
+    <string name="settings_weather_location_not_set">Not set</string>
+    <string name="settings_weather_location_change">Change…</string>
+    <string name="settings_weather_location_hint">City name</string>
+    <string name="settings_weather_location_search">Search</string>
+    <string name="settings_weather_location_no_results">No places found</string>
+    <string name="settings_weather_location_search_failed">Search failed — check the connection</string>
+    <string name="settings_weather_location_empty_query">Enter a city name</string>
 </resources>

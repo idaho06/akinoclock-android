@@ -15,18 +15,24 @@ import org.akinosoft.akinoclock.databinding.ActivitySettingsBinding
 import org.akinosoft.akinoclock.rss.data.RefreshOutcome
 import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.settings.model.ThemeMode
+import org.akinosoft.akinoclock.weather.data.GeocodingResult
+import org.akinosoft.akinoclock.weather.model.WeatherLocation
 
 class SettingsActivity : ComponentActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var feedAdapter: FeedListAdapter
+    private var locationSearchDialog: android.app.AlertDialog? = null
 
     private val container get() = (application as AkinoClockApp).container
 
     private val viewModel: SettingsViewModel by viewModels {
-        SettingsViewModel.Factory(container.settingsRepository, container.rssRepository) { mode ->
-            ThemeApplier.apply(applicationContext, mode)
-        }
+        SettingsViewModel.Factory(
+            container.settingsRepository,
+            container.rssRepository,
+            container.weatherRepository,
+            container.geocodingClient,
+        ) { mode -> ThemeApplier.apply(applicationContext, mode) }
     }
 
     /** Set while [renderTheme] is applying a remote state change, to keep it from re-triggering
@@ -51,6 +57,10 @@ class SettingsActivity : ComponentActivity() {
 
         binding.refreshNowButton.setOnClickListener { viewModel.refreshNow() }
 
+        binding.changeWeatherLocationButton.setOnClickListener {
+            locationSearchDialog = LocationSearchDialog.show(this) { query -> viewModel.searchLocation(query) }
+        }
+
         binding.themeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             if (applyingRemoteTheme) return@setOnCheckedChangeListener
             viewModel.setTheme(themeForRadioId(checkedId))
@@ -61,6 +71,8 @@ class SettingsActivity : ComponentActivity() {
                 launch { viewModel.feeds.collect(::renderFeeds) }
                 launch { viewModel.themeMode.collect(::renderTheme) }
                 launch { viewModel.refreshResult.collect(::showRefreshToast) }
+                launch { viewModel.weatherLocation.collect(::renderWeatherLocation) }
+                launch { viewModel.searchResult.collect(::handleSearchResult) }
             }
         }
     }
@@ -89,6 +101,23 @@ class SettingsActivity : ComponentActivity() {
         ThemeMode.SYSTEM -> R.id.themeSystemRadio
         ThemeMode.LIGHT -> R.id.themeLightRadio
         ThemeMode.DARK -> R.id.themeDarkRadio
+    }
+
+    private fun renderWeatherLocation(location: WeatherLocation?) {
+        binding.weatherLocationLabel.text = location?.name ?: getString(R.string.settings_weather_location_not_set)
+    }
+
+    private fun handleSearchResult(result: GeocodingResult) {
+        val dialog = locationSearchDialog ?: return
+        when (result) {
+            is GeocodingResult.Found -> LocationSearchDialog.showResults(this, dialog, result.locations) { location ->
+                viewModel.setWeatherLocation(location)
+            }
+            GeocodingResult.NoResults ->
+                LocationSearchDialog.showInlineError(dialog, getString(R.string.settings_weather_location_no_results))
+            GeocodingResult.Failed ->
+                LocationSearchDialog.showInlineError(dialog, getString(R.string.settings_weather_location_search_failed))
+        }
     }
 
     private fun showRefreshToast(outcome: RefreshOutcome) {
