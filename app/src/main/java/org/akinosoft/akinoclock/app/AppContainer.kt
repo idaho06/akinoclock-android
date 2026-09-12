@@ -21,6 +21,8 @@ import org.akinosoft.akinoclock.weather.data.GeocodingClient
 import org.akinosoft.akinoclock.weather.data.OpenMeteoGeocodingClient
 import org.akinosoft.akinoclock.weather.data.WeatherRepository
 
+private const val RSS_ACCEPT_HEADER = "application/rss+xml, application/atom+xml, application/xml, text/xml, */*"
+
 class AppContainer(
     context: Context,
     val clock: Clock = Clock.systemDefaultZone(),
@@ -28,7 +30,8 @@ class AppContainer(
     val permissionChecker: PermissionChecker = ContextPermissionChecker(context),
     val settingsRepository: SettingsRepository = SharedPreferencesSettingsRepository(context),
     val rssRepository: RssRepository = run {
-        val feedFetcher = HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}")
+        val feedFetcher =
+            HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}", accept = RSS_ACCEPT_HEADER)
         val feedCache = FeedCache(File(context.filesDir, "rss-cache"))
         DefaultRssRepository(settingsRepository.currentFeeds(), feedFetcher, feedCache, clock)
     },

@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
  */
 class HttpUrlConnectionFetcher(
     private val userAgent: String,
-    private val accept: String = RSS_ACCEPT_HEADER,
+    private val accept: String,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : HttpFetcher {
 
@@ -74,7 +74,6 @@ class HttpUrlConnectionFetcher(
     }
 
     companion object {
-        const val RSS_ACCEPT_HEADER = "application/rss+xml, application/atom+xml, application/xml, text/xml, */*"
         private const val CONNECT_TIMEOUT_MILLIS = 10_000
         private const val READ_TIMEOUT_MILLIS = 15_000
         private const val MAX_BODY_BYTES = 2 * 1024 * 1024

@@ -17,7 +17,10 @@ import org.junit.Test
 class HttpUrlConnectionFetcherTest {
 
     private lateinit var server: HttpServer
-    private val fetcher = HttpUrlConnectionFetcher(userAgent = "AkinoClock/test (+https://example.com/repo)")
+    private val fetcher = HttpUrlConnectionFetcher(
+        userAgent = "AkinoClock/test (+https://example.com/repo)",
+        accept = "application/xml",
+    )
 
     @Before
     fun startServer() {
