@@ -16,6 +16,11 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <org.akinosoft.akinoclock.weather.ui.WeatherStripView
+        android:id="@+id/weatherStrip"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/weather_strip_height" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/rss_bar_height"

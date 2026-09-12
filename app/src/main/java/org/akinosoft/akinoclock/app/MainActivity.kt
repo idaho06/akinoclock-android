@@ -22,6 +22,7 @@ import org.akinosoft.akinoclock.databinding.ActivityMainBinding
 import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.ui.RssViewModel
 import org.akinosoft.akinoclock.settings.ui.SettingsActivity
+import org.akinosoft.akinoclock.weather.ui.WeatherViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -35,6 +36,10 @@ class MainActivity : ComponentActivity() {
 
     private val rssViewModel: RssViewModel by viewModels {
         RssViewModel.Factory(container.rssRepository, container.settingsRepository.feeds, container.clock)
+    }
+
+    private val weatherViewModel: WeatherViewModel by viewModels {
+        WeatherViewModel.Factory(container.weatherRepository, container.settingsRepository.weatherLocation, container.clock)
     }
 
     private val requestCalendarPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -51,12 +56,14 @@ class MainActivity : ComponentActivity() {
         binding.calendarPanel.grantAccessButton.setOnClickListener { onGrantAccessClicked() }
         binding.rssCarousel.onHeadlineClick = { headline -> openHeadline(headline) }
         binding.settingsButton.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
+        binding.weatherStrip.onPlaceholderClick = { startActivity(Intent(this, SettingsActivity::class.java)) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.uiState.collect { state -> binding.calendarPanel.render(state) } }
                 launch { rssViewModel.uiState.collect { state -> binding.rssCarousel.render(state) } }
                 launch { container.nextAlarmSource.changes().collect { binding.clockView.nextAlarm = it } }
+                launch { weatherViewModel.uiState.collect { state -> binding.weatherStrip.render(state) } }
             }
         }
 
@@ -70,6 +77,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         viewModel.start()
         rssViewModel.start()
+        weatherViewModel.start()
         updateGrantAccessButtonLabel()
     }
 
@@ -77,6 +85,7 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         viewModel.stop()
         rssViewModel.stop()
+        weatherViewModel.stop()
     }
 
     override fun onResume() {

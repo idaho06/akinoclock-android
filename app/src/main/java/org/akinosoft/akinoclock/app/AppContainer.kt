@@ -16,6 +16,10 @@ import org.akinosoft.akinoclock.rss.data.RssRepository
 import org.akinosoft.akinoclock.settings.data.SettingsRepository
 import org.akinosoft.akinoclock.settings.data.SharedPreferencesSettingsRepository
 import org.akinosoft.akinoclock.util.net.HttpUrlConnectionFetcher
+import org.akinosoft.akinoclock.weather.data.DefaultWeatherRepository
+import org.akinosoft.akinoclock.weather.data.GeocodingClient
+import org.akinosoft.akinoclock.weather.data.OpenMeteoGeocodingClient
+import org.akinosoft.akinoclock.weather.data.WeatherRepository
 
 class AppContainer(
     context: Context,
@@ -29,4 +33,13 @@ class AppContainer(
         DefaultRssRepository(settingsRepository.currentFeeds(), feedFetcher, feedCache, clock)
     },
     val nextAlarmSource: NextAlarmSource = AlarmManagerNextAlarmSource(context),
+    val weatherRepository: WeatherRepository = run {
+        val weatherFetcher =
+            HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}", accept = "application/json")
+        val weatherCache = FeedCache(File(context.filesDir, "weather-cache"))
+        DefaultWeatherRepository(weatherFetcher, weatherCache, clock)
+    },
+    val geocodingClient: GeocodingClient = OpenMeteoGeocodingClient(
+        HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}", accept = "application/json"),
+    ),
 )

@@ -1,8 +1,12 @@
 # AkinoClock
 
 An analog clock in the style of the Braun BC12 alarm clock, sharing one screen with a
-current-month calendar and a configurable RSS headline carousel. Built for a low-cost
-tablet with Android 13.
+current-month calendar, a weather strip, and a configurable RSS headline carousel. The clock
+shows a fourth hand for the next system alarm when one is set within 12 hours. Built for a
+low-cost tablet with Android 13.
+
+The weather strip shows today's condition and temperature plus a two-day forecast, for a location
+picked once in Settings via city search — no location permission, no Play Services.
 
 | Dark | Light |
 |---|---|
