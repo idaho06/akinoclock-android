@@ -10,8 +10,10 @@ import kotlinx.coroutines.test.runTest
 import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.settings.model.DefaultFeeds
 import org.akinosoft.akinoclock.settings.model.ThemeMode
+import org.akinosoft.akinoclock.weather.model.WeatherLocation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -130,4 +132,47 @@ class SharedPreferencesSettingsRepositoryTest {
 
         assertTrue(second.permissionAsked())
     }
+
+    @Test
+    fun `weatherLocation defaults to null`() = runTest {
+        val repo = SharedPreferencesSettingsRepository(context())
+
+        assertNull(repo.currentWeatherLocation())
+    }
+
+    @Test
+    fun `a second instance over the same prefs sees a prior setWeatherLocation`() = runTest {
+        val location = WeatherLocation("Madrid, Spain", 40.4165, -3.70256)
+        SharedPreferencesSettingsRepository(context()).setWeatherLocation(location)
+
+        val second = SharedPreferencesSettingsRepository(context())
+
+        assertEquals(location, second.currentWeatherLocation())
+    }
+
+    @Test
+    fun `setWeatherLocation(null) removes the key`() = runTest {
+        val location = WeatherLocation("Madrid, Spain", 40.4165, -3.70256)
+        val repo = SharedPreferencesSettingsRepository(context())
+        repo.setWeatherLocation(location)
+
+        repo.setWeatherLocation(null)
+
+        assertNull(repo.currentWeatherLocation())
+    }
+
+    @Test
+    fun `weatherLocation flow emits the current value to an active collector on setWeatherLocation`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val repo = SharedPreferencesSettingsRepository(context(), UnconfinedTestDispatcher(testScheduler))
+            val collected = mutableListOf<WeatherLocation?>()
+            val job = launch { repo.weatherLocation.toList(collected) }
+            val location = WeatherLocation("Madrid, Spain", 40.4165, -3.70256)
+
+            repo.setWeatherLocation(location)
+
+            assertEquals(null, collected.first())
+            assertEquals(location, collected.last())
+            job.cancel()
+        }
 }

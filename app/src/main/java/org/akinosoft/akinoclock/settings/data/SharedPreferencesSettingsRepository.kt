@@ -13,6 +13,8 @@ import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.settings.model.DefaultFeeds
 import org.akinosoft.akinoclock.settings.model.FeedsJson
 import org.akinosoft.akinoclock.settings.model.ThemeMode
+import org.akinosoft.akinoclock.weather.model.WeatherLocation
+import org.akinosoft.akinoclock.weather.parse.WeatherLocationJson
 
 class SharedPreferencesSettingsRepository(
     context: Context,
@@ -26,6 +28,9 @@ class SharedPreferencesSettingsRepository(
     override val themeMode: Flow<ThemeMode> =
         preferenceChanges(KEY_THEME_MODE, ::currentThemeMode).distinctUntilChanged()
 
+    override val weatherLocation: Flow<WeatherLocation?> =
+        preferenceChanges(KEY_WEATHER_LOCATION, ::currentWeatherLocation).distinctUntilChanged()
+
     override suspend fun setFeeds(list: List<FeedConfig>) {
         withContext(ioDispatcher) {
             prefs.edit().putString(KEY_FEEDS, FeedsJson.encode(list)).commit()
@@ -38,12 +43,26 @@ class SharedPreferencesSettingsRepository(
         }
     }
 
+    override suspend fun setWeatherLocation(location: WeatherLocation?) {
+        withContext(ioDispatcher) {
+            val edit = prefs.edit()
+            if (location == null) edit.remove(KEY_WEATHER_LOCATION) else edit.putString(
+                KEY_WEATHER_LOCATION,
+                WeatherLocationJson.encode(location),
+            )
+            edit.commit()
+        }
+    }
+
     override fun currentFeeds(): List<FeedConfig> {
         val stored = prefs.getString(KEY_FEEDS, null) ?: return DefaultFeeds.list
         return FeedsJson.decode(stored)
     }
 
     override fun currentThemeMode(): ThemeMode = ThemeMode.fromStorageString(prefs.getString(KEY_THEME_MODE, null))
+
+    override fun currentWeatherLocation(): WeatherLocation? =
+        prefs.getString(KEY_WEATHER_LOCATION, null)?.let { WeatherLocationJson.decode(it) }
 
     override fun permissionAsked(): Boolean = prefs.getBoolean(KEY_PERMISSION_ASKED, false)
 
@@ -68,5 +87,6 @@ class SharedPreferencesSettingsRepository(
         private const val KEY_FEEDS = "feeds"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_PERMISSION_ASKED = "calendar_permission_asked"
+        private const val KEY_WEATHER_LOCATION = "weather_location"
     }
 }
