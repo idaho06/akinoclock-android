@@ -70,7 +70,7 @@ open class MonthGridView @JvmOverloads constructor(
 
         for (col in 0 until GRID_COLUMNS) {
             val label = DayOfWeek.MONDAY.plus(col.toLong()).getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            drawCenteredText(canvas, label, headerRect(col), palette.dim, textSizeRatio = 0.34f)
+            drawCenteredText(canvas, label, headerRect(col), palette.dim, textSizeRatio = 0.38f)
         }
 
         currentGrid.cells.forEachIndexed { index, cell ->
@@ -87,7 +87,7 @@ open class MonthGridView @JvmOverloads constructor(
                 cell.inCurrentMonth -> palette.normal
                 else -> palette.dim
             }
-            drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.42f)
+            drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.48f)
 
             if (cell.hasEvents) {
                 paint.color = palette.accent
