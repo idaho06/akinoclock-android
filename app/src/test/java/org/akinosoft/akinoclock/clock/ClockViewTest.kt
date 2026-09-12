@@ -249,6 +249,15 @@ class ClockViewTest {
     }
 
     @Test
+    fun `content description omits the alarm when nextAlarm is set but outside the 12 hour window`() {
+        val view = TestableClockView(context(), fixedClock(5, 0, 0), FakePeriodicScheduler())
+
+        view.nextAlarm = LocalDateTime.of(2024, 1, 1, 18, 0, 1).toInstant(ZoneOffset.UTC)
+
+        assertEquals("05:00", view.contentDescription)
+    }
+
+    @Test
     fun `setting nextAlarm invalidates exactly once`() {
         val view = TestableClockView(context(), fixedClock(5, 0, 0), FakePeriodicScheduler())
         val before = view.invalidateCount

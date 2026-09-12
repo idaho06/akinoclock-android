@@ -91,13 +91,11 @@ open class ClockView @JvmOverloads constructor(
     private fun setContentDescriptionFromTime() {
         lastDescriptionMinute = time.minute
         val base = LocalTime.of(time.hour, time.minute).format(DESCRIPTION_FORMATTER)
-        contentDescription = if (alarmAngleDeg() != null) {
-            val alarmWall = nextAlarm!!.atZone(clock.zone)
+        contentDescription = nextAlarm?.takeIf { alarmAngleDeg() != null }?.let { alarm ->
+            val alarmWall = alarm.atZone(clock.zone)
             val alarmText = LocalTime.of(alarmWall.hour, alarmWall.minute).format(DESCRIPTION_FORMATTER)
             resources.getString(R.string.clock_alarm_description_format, base, alarmText)
-        } else {
-            base
-        }
+        } ?: base
     }
 
     private fun alarmAngleDeg(): Float? = AlarmHand.angleDeg(clock.instant(), nextAlarm, clock.zone)
