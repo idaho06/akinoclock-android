@@ -86,7 +86,8 @@ class WeatherStripView @JvmOverloads constructor(
     }
 
     private fun bindDay(container: View, day: DayForecast) {
-        container.findViewById<TextView>(R.id.dayWeekday).text = WEEKDAY_FORMAT.format(day.date)
+        val weekdayFormat = java.time.format.DateTimeFormatter.ofPattern("EEE", java.util.Locale.getDefault())
+        container.findViewById<TextView>(R.id.dayWeekday).text = weekdayFormat.format(day.date)
         container.findViewById<ImageView>(R.id.dayIcon).setIcon(day.condition, isDay = true)
         container.findViewById<TextView>(R.id.dayMinMax).text = minMaxText(day)
     }
@@ -100,10 +101,5 @@ class WeatherStripView @JvmOverloads constructor(
             setImageResource(res)
             tag = res
         }
-    }
-
-    private companion object {
-        val WEEKDAY_FORMAT: java.time.format.DateTimeFormatter =
-            java.time.format.DateTimeFormatter.ofPattern("EEE", java.util.Locale.getDefault())
     }
 }

@@ -95,6 +95,23 @@ class WeatherStripViewTest {
     }
 
     @Test
+    fun `weekday labels reflect a locale change without recreating the view`() {
+        val originalLocale = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.FRENCH)
+
+            view.render(WeatherUiState.Showing(report(), stale = false))
+
+            val day1 = view.findViewById<android.view.View>(R.id.forecastDay1)
+            val expected = java.time.format.DateTimeFormatter.ofPattern("EEE", java.util.Locale.FRENCH)
+                .format(LocalDate.parse("2026-09-13"))
+            assertEquals(expected, day1.findViewById<TextView>(R.id.dayWeekday).text.toString())
+        } finally {
+            java.util.Locale.setDefault(originalLocale)
+        }
+    }
+
+    @Test
     fun `Loading shows a loading placeholder instead of a blank strip`() {
         view.render(WeatherUiState.Loading)
 
