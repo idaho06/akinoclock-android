@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+Adds a weather strip and an alarm hand on the clock face.
+
+- Weather strip: today's condition and temperature plus a two-day forecast, from Open-Meteo, for
+  a location picked once in Settings via city search. No location permission, no Play Services.
+  Refreshes hourly and caches the last successful result for offline viewing.
+- Fourth clock hand showing the next system alarm when one is set within 12 hours.
+
 ## 1.0.0
 
 An analog clock in the style of the Braun BC12 alarm clock, sharing one screen with a
