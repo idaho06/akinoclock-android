@@ -1,4 +1,4 @@
-package org.akinosoft.akinoclock.rss.data
+package org.akinosoft.akinoclock.util.net
 
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -10,14 +10,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Fetches a feed over HTTP(S) with `HttpURLConnection` — no extra dependency, per the standing
+ * Fetches a resource over HTTP(S) with `HttpURLConnection` — no extra dependency, per the standing
  * "minimal dependencies" constraint. Response bodies are capped at [MAX_BODY_BYTES] while
  * streaming, not after buffering the whole thing into memory.
  */
 class HttpUrlConnectionFetcher(
     private val userAgent: String,
+    private val accept: String = RSS_ACCEPT_HEADER,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : FeedFetcher {
+) : HttpFetcher {
 
     override suspend fun fetch(url: String, ifModifiedSinceMillis: Long?): FetchResult = withContext(ioDispatcher) {
         try {
@@ -26,7 +27,7 @@ class HttpUrlConnectionFetcher(
             connection.connectTimeout = CONNECT_TIMEOUT_MILLIS
             connection.readTimeout = READ_TIMEOUT_MILLIS
             connection.instanceFollowRedirects = true
-            connection.setRequestProperty("Accept", ACCEPT_HEADER)
+            connection.setRequestProperty("Accept", accept)
             connection.setRequestProperty("User-Agent", userAgent)
             connection.setRequestProperty("Accept-Encoding", "gzip")
             if (ifModifiedSinceMillis != null) connection.ifModifiedSince = ifModifiedSinceMillis
@@ -72,10 +73,10 @@ class HttpUrlConnectionFetcher(
         return FetchResult.Success(buffer.toByteArray(), lastModified)
     }
 
-    private companion object {
-        const val CONNECT_TIMEOUT_MILLIS = 10_000
-        const val READ_TIMEOUT_MILLIS = 15_000
-        const val MAX_BODY_BYTES = 2 * 1024 * 1024
-        const val ACCEPT_HEADER = "application/rss+xml, application/atom+xml, application/xml, text/xml, */*"
+    companion object {
+        const val RSS_ACCEPT_HEADER = "application/rss+xml, application/atom+xml, application/xml, text/xml, */*"
+        private const val CONNECT_TIMEOUT_MILLIS = 10_000
+        private const val READ_TIMEOUT_MILLIS = 15_000
+        private const val MAX_BODY_BYTES = 2 * 1024 * 1024
     }
 }

@@ -17,9 +17,11 @@ import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.parse.FeedParseException
 import org.akinosoft.akinoclock.rss.parse.FeedParser
 import org.akinosoft.akinoclock.rss.parse.Interleaver
+import org.akinosoft.akinoclock.util.net.FetchResult
+import org.akinosoft.akinoclock.util.net.HttpFetcher
 
 /**
- * Combines [FeedFetcher], [FeedParser] and [FeedCache]: cached headlines are loaded off the
+ * Combines [HttpFetcher], [FeedParser] and [FeedCache]: cached headlines are loaded off the
  * constructing thread and become available once that finishes (before any network call), and
  * [refresh] fetches feeds sequentially (this device has no need for parallel connections)
  * updating the cache, the headlines/status flows, and pruning feeds no longer in the configured
@@ -33,7 +35,7 @@ import org.akinosoft.akinoclock.rss.parse.Interleaver
  */
 class DefaultRssRepository(
     initialFeeds: List<FeedConfig>,
-    private val fetcher: FeedFetcher,
+    private val fetcher: HttpFetcher,
     private val cache: FeedCache,
     private val clock: Clock = Clock.systemUTC(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,

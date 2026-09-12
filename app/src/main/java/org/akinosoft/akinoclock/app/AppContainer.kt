@@ -12,10 +12,10 @@ import org.akinosoft.akinoclock.clock.alarm.AlarmManagerNextAlarmSource
 import org.akinosoft.akinoclock.clock.alarm.NextAlarmSource
 import org.akinosoft.akinoclock.rss.data.DefaultRssRepository
 import org.akinosoft.akinoclock.rss.data.FeedCache
-import org.akinosoft.akinoclock.rss.data.HttpUrlConnectionFetcher
 import org.akinosoft.akinoclock.rss.data.RssRepository
 import org.akinosoft.akinoclock.settings.data.SettingsRepository
 import org.akinosoft.akinoclock.settings.data.SharedPreferencesSettingsRepository
+import org.akinosoft.akinoclock.util.net.HttpUrlConnectionFetcher
 
 class AppContainer(
     context: Context,

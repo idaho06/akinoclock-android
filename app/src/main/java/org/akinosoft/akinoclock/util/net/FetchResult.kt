@@ -1,4 +1,4 @@
-package org.akinosoft.akinoclock.rss.data
+package org.akinosoft.akinoclock.util.net
 
 sealed class FetchResult {
     data class Success(val bytes: ByteArray, val lastModifiedMillis: Long?) : FetchResult()

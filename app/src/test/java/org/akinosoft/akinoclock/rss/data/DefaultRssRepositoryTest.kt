@@ -13,6 +13,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.akinosoft.akinoclock.rss.model.FeedConfig
+import org.akinosoft.akinoclock.util.net.FetchResult
+import org.akinosoft.akinoclock.util.net.HttpFetcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -42,7 +44,7 @@ class DefaultRssRepositoryTest {
             val feed = FeedConfig(url = "https://example.com/feed.xml")
             val cache = cache()
             cache.write(feed.url, rss("Cached story"))
-            val fetcher = mockk<FeedFetcher>()
+            val fetcher = mockk<HttpFetcher>()
 
             val repository = DefaultRssRepository(
                 listOf(feed), fetcher, cache, fixedClock,
@@ -63,7 +65,7 @@ class DefaultRssRepositoryTest {
     fun `refresh success updates cache, headlines and status`() = runTest {
         val feed = FeedConfig(url = "https://example.com/feed.xml")
         val cache = cache()
-        val fetcher = mockk<FeedFetcher>()
+        val fetcher = mockk<HttpFetcher>()
         val bytes = rss("Fresh story")
         coEvery { fetcher.fetch(feed.url, null) } returns FetchResult.Success(bytes, lastModifiedMillis = null)
         val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
@@ -85,7 +87,7 @@ class DefaultRssRepositoryTest {
         val c = FeedConfig(url = "https://example.com/c.xml")
         val cache = cache()
         cache.write(b.url, rss("Old b story"))
-        val fetcher = mockk<FeedFetcher>()
+        val fetcher = mockk<HttpFetcher>()
         coEvery { fetcher.fetch(a.url, null) } returns FetchResult.Success(rss("New a story"), null)
         coEvery { fetcher.fetch(b.url, any()) } returns FetchResult.Failure(FetchResult.Failure.Reason.Http(500))
         coEvery { fetcher.fetch(c.url, null) } returns FetchResult.Success(rss("New c story"), null)
@@ -107,7 +109,7 @@ class DefaultRssRepositoryTest {
         var currentMillis = 1_000L
         val cache = FeedCache(tempFolder.newFolder("rss-cache")) { currentMillis }
         cache.write(feed.url, rss("Unchanged story"))
-        val fetcher = mockk<FeedFetcher>()
+        val fetcher = mockk<HttpFetcher>()
         coEvery { fetcher.fetch(feed.url, 1_000L) } returns FetchResult.NotModified
         val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
 
@@ -126,7 +128,7 @@ class DefaultRssRepositoryTest {
         val cache = cache()
         cache.write(a.url, rss("a story"))
         cache.write(b.url, rss("b story"))
-        val fetcher = mockk<FeedFetcher>()
+        val fetcher = mockk<HttpFetcher>()
         coEvery { fetcher.fetch(a.url, any()) } returns FetchResult.NotModified
         val repository = DefaultRssRepository(listOf(a, b), fetcher, cache, fixedClock)
 
@@ -143,7 +145,7 @@ class DefaultRssRepositoryTest {
         val b = FeedConfig(url = "https://example.com/b.xml")
         val c = FeedConfig(url = "https://example.com/c.xml")
         val cache = cache()
-        val fetcher = mockk<FeedFetcher>()
+        val fetcher = mockk<HttpFetcher>()
         coEvery { fetcher.fetch(any(), any()) } returns FetchResult.NotModified
         val repository = DefaultRssRepository(listOf(a, b, c), fetcher, cache, fixedClock)
 

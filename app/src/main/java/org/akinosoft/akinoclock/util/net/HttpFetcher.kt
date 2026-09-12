@@ -1,5 +1,5 @@
-package org.akinosoft.akinoclock.rss.data
+package org.akinosoft.akinoclock.util.net
 
-interface FeedFetcher {
+interface HttpFetcher {
     suspend fun fetch(url: String, ifModifiedSinceMillis: Long?): FetchResult
 }

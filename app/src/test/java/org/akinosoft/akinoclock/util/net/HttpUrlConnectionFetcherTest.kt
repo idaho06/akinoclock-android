@@ -1,4 +1,4 @@
-package org.akinosoft.akinoclock.rss.data
+package org.akinosoft.akinoclock.util.net
 
 import com.sun.net.httpserver.HttpServer
 import java.io.ByteArrayOutputStream
