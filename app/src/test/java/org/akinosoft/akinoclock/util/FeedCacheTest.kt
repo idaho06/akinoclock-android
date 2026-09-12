@@ -1,4 +1,4 @@
-package org.akinosoft.akinoclock.rss.data
+package org.akinosoft.akinoclock.util
 
 import java.io.File
 import org.junit.Assert.assertArrayEquals

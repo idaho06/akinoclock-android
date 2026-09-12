@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.akinosoft.akinoclock.rss.data.FeedCache
+import org.akinosoft.akinoclock.util.FeedCache
 import org.akinosoft.akinoclock.util.net.FetchResult
 import org.akinosoft.akinoclock.util.net.HttpFetcher
 import org.akinosoft.akinoclock.weather.model.WeatherLocation

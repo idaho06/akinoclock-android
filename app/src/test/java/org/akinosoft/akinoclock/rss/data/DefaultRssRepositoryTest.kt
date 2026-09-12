@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.akinosoft.akinoclock.rss.model.FeedConfig
+import org.akinosoft.akinoclock.util.FeedCache
 import org.akinosoft.akinoclock.util.net.FetchResult
 import org.akinosoft.akinoclock.util.net.HttpFetcher
 import org.junit.Assert.assertEquals

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.akinosoft.akinoclock.rss.data.FeedCache
+import org.akinosoft.akinoclock.util.FeedCache
 import org.akinosoft.akinoclock.util.net.FetchResult
 import org.akinosoft.akinoclock.util.net.HttpFetcher
 import org.akinosoft.akinoclock.weather.model.WeatherLocation

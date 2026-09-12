@@ -17,6 +17,7 @@ import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.parse.FeedParseException
 import org.akinosoft.akinoclock.rss.parse.FeedParser
 import org.akinosoft.akinoclock.rss.parse.Interleaver
+import org.akinosoft.akinoclock.util.FeedCache
 import org.akinosoft.akinoclock.util.net.FetchResult
 import org.akinosoft.akinoclock.util.net.HttpFetcher
 
