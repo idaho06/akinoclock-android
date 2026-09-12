@@ -22,6 +22,7 @@ import org.akinosoft.akinoclock.weather.data.OpenMeteoGeocodingClient
 import org.akinosoft.akinoclock.weather.data.WeatherRepository
 
 private const val RSS_ACCEPT_HEADER = "application/rss+xml, application/atom+xml, application/xml, text/xml, */*"
+private val USER_AGENT = "AkinoClock/${BuildConfig.VERSION_NAME}"
 
 class AppContainer(
     context: Context,
@@ -30,19 +31,15 @@ class AppContainer(
     val permissionChecker: PermissionChecker = ContextPermissionChecker(context),
     val settingsRepository: SettingsRepository = SharedPreferencesSettingsRepository(context),
     val rssRepository: RssRepository = run {
-        val feedFetcher =
-            HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}", accept = RSS_ACCEPT_HEADER)
+        val feedFetcher = HttpUrlConnectionFetcher(userAgent = USER_AGENT, accept = RSS_ACCEPT_HEADER)
         val feedCache = FeedCache(File(context.filesDir, "rss-cache"))
         DefaultRssRepository(settingsRepository.currentFeeds(), feedFetcher, feedCache, clock)
     },
     val nextAlarmSource: NextAlarmSource = AlarmManagerNextAlarmSource(context),
+    jsonFetcher: HttpUrlConnectionFetcher = HttpUrlConnectionFetcher(userAgent = USER_AGENT, accept = "application/json"),
     val weatherRepository: WeatherRepository = run {
-        val weatherFetcher =
-            HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}", accept = "application/json")
         val weatherCache = FeedCache(File(context.filesDir, "weather-cache"))
-        DefaultWeatherRepository(weatherFetcher, weatherCache, clock)
+        DefaultWeatherRepository(jsonFetcher, weatherCache, clock)
     },
-    val geocodingClient: GeocodingClient = OpenMeteoGeocodingClient(
-        HttpUrlConnectionFetcher(userAgent = "AkinoClock/${BuildConfig.VERSION_NAME}", accept = "application/json"),
-    ),
+    val geocodingClient: GeocodingClient = OpenMeteoGeocodingClient(jsonFetcher),
 )
