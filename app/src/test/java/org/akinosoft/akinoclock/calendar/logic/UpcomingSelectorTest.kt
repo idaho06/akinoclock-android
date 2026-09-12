@@ -48,12 +48,13 @@ class UpcomingSelectorTest {
     }
 
     @Test
-    fun `result is capped at 6`() {
-        val instances = (0 until 10).map { timedEvent(it.toLong(), now.toLocalDate().plusDays(it.toLong()), 10) }
+    fun `result is capped at 3`() {
+        // now is Sep 25; Sep has 30 days, so all 5 of these stay within the current month.
+        val instances = (0 until 5).map { timedEvent(it.toLong(), now.toLocalDate().plusDays(it.toLong()), 10) }
 
         val result = UpcomingSelector.select(instances, now)
 
-        assertEquals(6, result.size)
+        assertEquals(3, result.size)
     }
 
     @Test
@@ -71,5 +72,27 @@ class UpcomingSelectorTest {
         val result = UpcomingSelector.select(listOf(yesterday, today), now)
 
         assertEquals(listOf(today), result)
+    }
+
+    @Test
+    fun `events in the next month are excluded even within the top N by date`() {
+        // now is Sep 25; Sep 30 is the last day of the current month, Oct 1 is next month.
+        val lastDayOfMonth = timedEvent(11, LocalDate.of(2026, 9, 30), 10)
+        val nextMonth = timedEvent(12, LocalDate.of(2026, 10, 1), 10)
+
+        val result = UpcomingSelector.select(listOf(lastDayOfMonth, nextMonth), now)
+
+        assertEquals(listOf(lastDayOfMonth), result)
+    }
+
+    @Test
+    fun `near month-end fewer than 3 qualifying events are returned without padding`() {
+        val nowNearMonthEnd = ZonedDateTime.of(2026, 9, 29, 12, 0, 0, 0, madrid)
+        val lastDayOfMonth = timedEvent(13, LocalDate.of(2026, 9, 30), 10)
+        val nextMonth = timedEvent(14, LocalDate.of(2026, 10, 1), 10)
+
+        val result = UpcomingSelector.select(listOf(lastDayOfMonth, nextMonth), nowNearMonthEnd)
+
+        assertEquals(listOf(lastDayOfMonth), result)
     }
 }
