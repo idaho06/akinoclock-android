@@ -31,7 +31,7 @@ class FeedCache(
     }
 
     fun read(url: String): CachedFeed? {
-        val file = fileFor(url)
+        val file = migrateLegacyFileIfPresent(url)
         if (!file.isFile) return null
         return try {
             CachedFeed(file.readBytes(), file.lastModified())
@@ -48,6 +48,18 @@ class FeedCache(
     fun touch(url: String) {
         val file = fileFor(url)
         if (file.isFile) file.setLastModified(nowMillis())
+    }
+
+    /**
+     * Returns the current cache file for [url], migrating a pre-`.cache`-extension file left
+     * over from before FeedCache was shared between RSS and weather, if one is found.
+     */
+    private fun migrateLegacyFileIfPresent(url: String): File {
+        val file = fileFor(url)
+        if (file.isFile) return file
+        val legacyFile = File(cacheDir, "${sha1Hex(url)}.xml")
+        if (!legacyFile.isFile) return file
+        return if (legacyFile.renameTo(file)) file else legacyFile
     }
 
     private fun fileFor(url: String) = File(cacheDir, "${sha1Hex(url)}.cache")

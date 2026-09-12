@@ -133,6 +133,51 @@ class FeedCacheTest {
     }
 
     @Test
+    fun `read migrates a legacy xml-suffixed cache file to the cache extension`() {
+        val dir = tempFolder.newFolder("rss-cache")
+        val cache = FeedCache(dir) { 1_000L }
+        val url = "https://example.com/feed.xml"
+        val legacyFile = File(dir, sha1Hex(url) + ".xml")
+        legacyFile.writeBytes("legacy".toByteArray())
+
+        val result = cache.read(url)
+
+        assertArrayEquals("legacy".toByteArray(), result?.bytes)
+        assertTrue(!legacyFile.isFile)
+        assertTrue(File(dir, sha1Hex(url) + ".cache").isFile)
+    }
+
+    @Test
+    fun `read still returns legacy bytes when the migrating rename fails`() {
+        val dir = tempFolder.newFolder("rss-cache")
+        val cache = FeedCache(dir) { 1_000L }
+        val url = "https://example.com/feed.xml"
+        val legacyFile = File(dir, sha1Hex(url) + ".xml")
+        legacyFile.writeBytes("legacy".toByteArray())
+
+        dir.setWritable(false)
+        val probe = File(dir, "probe-writability")
+        val directoryIsActuallyReadOnly = runCatching { probe.createNewFile() }.getOrDefault(false).not()
+        probe.delete()
+        dir.setWritable(true)
+        assumeTrue("test runner does not honor read-only directories (likely running as root)", directoryIsActuallyReadOnly)
+
+        dir.setWritable(false)
+        val result = try {
+            cache.read(url)
+        } finally {
+            dir.setWritable(true)
+        }
+
+        assertArrayEquals("legacy".toByteArray(), result?.bytes)
+    }
+
+    private fun sha1Hex(text: String): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-1").digest(text.toByteArray())
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    @Test
     fun `read returns null for a corrupt cache entry`() {
         val dir = tempFolder.newFolder("rss-cache")
         val cache = FeedCache(dir) { 1_000L }
