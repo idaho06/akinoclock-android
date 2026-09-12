@@ -8,6 +8,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.time.Clock
+import java.time.Instant
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.flow
 import org.akinosoft.akinoclock.calendar.data.CalendarRepository
 import org.akinosoft.akinoclock.calendar.data.PermissionChecker
 import org.akinosoft.akinoclock.calendar.model.EventInstance
+import org.akinosoft.akinoclock.clock.alarm.NextAlarmSource
 import org.akinosoft.akinoclock.rss.data.RefreshOutcome
 import org.akinosoft.akinoclock.rss.data.RssRepository
 import org.akinosoft.akinoclock.rss.model.FeedConfig
@@ -48,6 +50,17 @@ private class FakeCalendarRepository : CalendarRepository {
     }
 }
 
+private class FakeNextAlarmSource : NextAlarmSource {
+    private val state = MutableStateFlow<Instant?>(null)
+
+    fun setNextAlarm(value: Instant?) {
+        state.value = value
+    }
+
+    override fun nextAlarm(): Instant? = state.value
+    override fun changes(): Flow<Instant?> = state
+}
+
 private fun fakeRssRepository(): RssRepository = mockk {
     every { headlines() } returns MutableStateFlow(emptyList())
     every { status() } returns MutableStateFlow(emptyMap())
@@ -64,6 +77,7 @@ class MainActivityTest {
             initialFeeds = listOf(FeedConfig(url = "https://example.com/feed.xml")),
         ),
         permissionChecker: PermissionChecker = mockk { every { hasReadCalendar() } returns true },
+        nextAlarmSource: NextAlarmSource = FakeNextAlarmSource(),
     ) {
         val app = ApplicationProvider.getApplicationContext<AkinoClockApp>()
         app.container = AppContainer(
@@ -73,6 +87,7 @@ class MainActivityTest {
             permissionChecker = permissionChecker,
             settingsRepository = settingsRepository,
             rssRepository = rssRepository,
+            nextAlarmSource = nextAlarmSource,
         )
     }
 
@@ -96,6 +111,26 @@ class MainActivityTest {
 
         controller.stop()
         assertEquals(0, calendarRepository.activeCollectors)
+    }
+
+    @Test
+    fun `starting the activity reflects the next alarm on the clock view, stopping ignores updates, resuming re-syncs`() {
+        val nextAlarmSource = FakeNextAlarmSource()
+        installFakeContainer(nextAlarmSource = nextAlarmSource)
+        val controller = Robolectric.buildActivity(MainActivity::class.java).create()
+        val activity = controller.get()
+
+        controller.start()
+        val alarm = Instant.parse("2024-01-01T06:00:00Z")
+        nextAlarmSource.setNextAlarm(alarm)
+        assertEquals(alarm, activity.binding.clockView.nextAlarm)
+
+        controller.stop()
+        nextAlarmSource.setNextAlarm(null)
+        assertEquals(alarm, activity.binding.clockView.nextAlarm)
+
+        controller.start()
+        assertEquals(null, activity.binding.clockView.nextAlarm)
     }
 
     @Test

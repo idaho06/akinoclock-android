@@ -8,6 +8,8 @@ import org.akinosoft.akinoclock.calendar.data.CalendarRepository
 import org.akinosoft.akinoclock.calendar.data.ContentProviderCalendarRepository
 import org.akinosoft.akinoclock.calendar.data.ContextPermissionChecker
 import org.akinosoft.akinoclock.calendar.data.PermissionChecker
+import org.akinosoft.akinoclock.clock.alarm.AlarmManagerNextAlarmSource
+import org.akinosoft.akinoclock.clock.alarm.NextAlarmSource
 import org.akinosoft.akinoclock.rss.data.DefaultRssRepository
 import org.akinosoft.akinoclock.rss.data.FeedCache
 import org.akinosoft.akinoclock.rss.data.HttpUrlConnectionFetcher
@@ -26,4 +28,5 @@ class AppContainer(
         val feedCache = FeedCache(File(context.filesDir, "rss-cache"))
         DefaultRssRepository(settingsRepository.currentFeeds(), feedFetcher, feedCache, clock)
     },
+    val nextAlarmSource: NextAlarmSource = AlarmManagerNextAlarmSource(context),
 )

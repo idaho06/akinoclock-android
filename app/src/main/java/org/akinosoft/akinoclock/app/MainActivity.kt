@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.uiState.collect { state -> binding.calendarPanel.render(state) } }
                 launch { rssViewModel.uiState.collect { state -> binding.rssCarousel.render(state) } }
+                launch { container.nextAlarmSource.changes().collect { binding.clockView.nextAlarm = it } }
             }
         }
 
