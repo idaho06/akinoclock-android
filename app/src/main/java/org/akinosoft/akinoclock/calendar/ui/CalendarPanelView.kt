@@ -25,7 +25,6 @@ class CalendarPanelView @JvmOverloads constructor(
         monthGridView = findViewById(R.id.monthGridView)
         todayEventsView = findViewById(R.id.todayEventsView)
         grantAccessButton = findViewById(R.id.grantAccessButton)
-        todayEventsView.maxRows = resources.getInteger(R.integer.today_events_max_rows)
     }
 
     fun render(state: CalendarUiState) {

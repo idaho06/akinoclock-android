@@ -26,14 +26,6 @@ class CalendarPanelViewTest {
     private fun panel(): CalendarPanelView = CalendarPanelView(ApplicationProvider.getApplicationContext())
 
     @Test
-    fun `todayEventsView maxRows is initialized from the today_events_max_rows integer resource`() {
-        val view = panel()
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-
-        assertEquals(context.resources.getInteger(R.integer.today_events_max_rows), view.todayEventsView.maxRows)
-    }
-
-    @Test
     fun `Granted hides the button and shows the grid and today list`() {
         val grid = MonthGridBuilder.build(month, today, setOf(LocalDate.of(2026, 9, 26)))
         val events = listOf(
