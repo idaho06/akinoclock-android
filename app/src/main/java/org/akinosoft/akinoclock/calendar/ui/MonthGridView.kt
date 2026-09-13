@@ -59,10 +59,8 @@ open class MonthGridView @JvmOverloads constructor(
     /** The date at ([x], [y]), or `null` for the weekday header row or out-of-grid coordinates. */
     private fun dateAt(x: Float, y: Float): LocalDate? {
         val currentGrid = grid ?: return null
-        val cellWidth = width.toFloat() / GRID_COLUMNS
-        val cellHeight = height.toFloat() / TOTAL_ROWS
-        val col = (x / cellWidth).toInt().coerceIn(0, GRID_COLUMNS - 1)
-        val row = (y / cellHeight).toInt()
+        val col = (x / cellWidth()).toInt().coerceIn(0, GRID_COLUMNS - 1)
+        val row = (y / cellHeight()).toInt()
         if (row !in 1 until TOTAL_ROWS) return null
         val index = (row - 1) * GRID_COLUMNS + col
         return currentGrid.cells.getOrNull(index)?.date
@@ -79,12 +77,16 @@ open class MonthGridView @JvmOverloads constructor(
     fun headerRect(col: Int): RectF = columnRect(col, row = 0)
 
     private fun columnRect(col: Int, row: Int): RectF {
-        val cellWidth = width.toFloat() / GRID_COLUMNS
-        val cellHeight = height.toFloat() / TOTAL_ROWS
+        val cellWidth = cellWidth()
+        val cellHeight = cellHeight()
         val left = col * cellWidth
         val top = row * cellHeight
         return RectF(left, top, left + cellWidth, top + cellHeight)
     }
+
+    private fun cellWidth() = width.toFloat() / GRID_COLUMNS
+
+    private fun cellHeight() = height.toFloat() / TOTAL_ROWS
 
     private fun drawCenteredText(canvas: Canvas, text: String, rect: RectF, color: Int, textSizeRatio: Float) {
         paint.color = color
