@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.CalendarContract
 import android.provider.Settings
 import android.view.WindowManager
 import android.widget.Toast
@@ -13,6 +14,8 @@ import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.launch
 import org.akinosoft.akinoclock.R
 import org.akinosoft.akinoclock.calendar.ui.CalendarViewModel
@@ -60,6 +63,7 @@ class MainActivity : ComponentActivity() {
         binding.settingsButton.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
         binding.weatherStrip.onPlaceholderClick = { startActivity(Intent(this, SettingsActivity::class.java)) }
         binding.weatherStrip.onForecastClick = { location -> openForecast(location) }
+        binding.calendarPanel.monthGridView.onDateClick = { date -> openCalendarDate(date) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -117,6 +121,17 @@ class MainActivity : ComponentActivity() {
             startActivity(intent)
         } else {
             Toast.makeText(this, R.string.rss_no_browser, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openCalendarDate(date: LocalDate) {
+        val millis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val uri = CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(millis.toString()).build()
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, R.string.calendar_no_app, Toast.LENGTH_SHORT).show()
         }
     }
 

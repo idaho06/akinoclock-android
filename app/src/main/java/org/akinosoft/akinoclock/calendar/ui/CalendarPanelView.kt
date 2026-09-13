@@ -40,10 +40,12 @@ class CalendarPanelView @JvmOverloads constructor(
             is CalendarUiState.Granted -> {
                 grantAccessButton.visibility = View.GONE
                 todayEventsView.setEvents(state.todayList, state.today)
+                monthGridView.isEnabled = true
             }
             is CalendarUiState.NotGranted -> {
                 grantAccessButton.visibility = View.VISIBLE
                 todayEventsView.setEvents(emptyList(), state.grid.month.atDay(1))
+                monthGridView.isEnabled = false
             }
         }
     }

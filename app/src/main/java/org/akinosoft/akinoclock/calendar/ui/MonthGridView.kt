@@ -5,8 +5,10 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import org.akinosoft.akinoclock.calendar.model.MonthGrid
@@ -31,12 +33,39 @@ open class MonthGridView @JvmOverloads constructor(
             invalidate()
         }
 
+    /** Fires with the tapped cell's date; never fires for a tap on the weekday header row, or
+     * while [isEnabled] is false (e.g. calendar permission not granted — see CalendarPanelView). */
+    var onDateClick: ((LocalDate) -> Unit)? = null
+
     private var grid: MonthGrid? = null
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    init {
+        isClickable = true
+    }
 
     fun setGrid(newGrid: MonthGrid) {
         grid = newGrid
         invalidate()
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (isEnabled && event.action == MotionEvent.ACTION_UP) {
+            dateAt(event.x, event.y)?.let { onDateClick?.invoke(it) }
+        }
+        return true
+    }
+
+    /** The date at ([x], [y]), or `null` for the weekday header row or out-of-grid coordinates. */
+    private fun dateAt(x: Float, y: Float): LocalDate? {
+        val currentGrid = grid ?: return null
+        val cellWidth = width.toFloat() / GRID_COLUMNS
+        val cellHeight = height.toFloat() / TOTAL_ROWS
+        val col = (x / cellWidth).toInt().coerceIn(0, GRID_COLUMNS - 1)
+        val row = (y / cellHeight).toInt()
+        if (row !in 1 until TOTAL_ROWS) return null
+        val index = (row - 1) * GRID_COLUMNS + col
+        return currentGrid.cells.getOrNull(index)?.date
     }
 
     /** The rect for grid cell [index] (0..41), below the weekday header row. */

@@ -3,6 +3,7 @@ package org.akinosoft.akinoclock.calendar.ui
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
 import java.time.LocalDate
 import java.time.YearMonth
@@ -128,6 +129,58 @@ class MonthGridViewTest {
         val lastCell = view.cellRect(41) // row 6 (last grid row), col 6 (last column)
         assertEquals(700f, lastCell.right, 0.01f)
         assertEquals(210f, lastCell.bottom, 0.01f)
+    }
+
+    private fun dispatchTap(view: MonthGridView, x: Float, y: Float) {
+        val down = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, x, y, 0)
+        val up = MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, x, y, 0)
+        view.dispatchTouchEvent(down)
+        view.dispatchTouchEvent(up)
+        down.recycle()
+        up.recycle()
+    }
+
+    @Test
+    fun `tapping a day cell invokes onDateClick with that cell's date`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.layout(0, 0, 350, 300)
+        view.setGrid(grid)
+        var clicked: LocalDate? = null
+        view.onDateClick = { clicked = it }
+
+        val rect = view.cellRect(0)
+        dispatchTap(view, rect.centerX(), rect.centerY())
+
+        assertEquals(grid.cells[0].date, clicked)
+    }
+
+    @Test
+    fun `tapping the weekday header row does not invoke onDateClick`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.layout(0, 0, 350, 300)
+        view.setGrid(grid)
+        var clicked: LocalDate? = null
+        view.onDateClick = { clicked = it }
+
+        val rect = view.headerRect(0)
+        dispatchTap(view, rect.centerX(), rect.centerY())
+
+        assertEquals(null, clicked)
+    }
+
+    @Test
+    fun `tapping a day cell while disabled does not invoke onDateClick`() {
+        val view = MonthGridView(ApplicationProvider.getApplicationContext())
+        view.layout(0, 0, 350, 300)
+        view.setGrid(grid)
+        view.isEnabled = false
+        var clicked: LocalDate? = null
+        view.onDateClick = { clicked = it }
+
+        val rect = view.cellRect(0)
+        dispatchTap(view, rect.centerX(), rect.centerY())
+
+        assertEquals(null, clicked)
     }
 
     @Test

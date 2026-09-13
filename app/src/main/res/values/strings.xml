@@ -6,6 +6,7 @@
     <string name="calendar_no_events_today">No events today</string>
     <string name="calendar_grant_access">Grant calendar access</string>
     <string name="calendar_open_settings">Open settings</string>
+    <string name="calendar_no_app">No calendar app found to open this date</string>
     <string name="rss_no_headlines">No headlines — add feeds in settings</string>
     <string name="rss_stale_glyph">⚠</string>
     <string name="rss_no_browser">No browser app found to open this link</string>

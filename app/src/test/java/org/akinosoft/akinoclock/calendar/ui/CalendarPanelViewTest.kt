@@ -12,6 +12,7 @@ import org.akinosoft.akinoclock.calendar.logic.MonthGridBuilder
 import org.akinosoft.akinoclock.calendar.model.CalendarUiState
 import org.akinosoft.akinoclock.calendar.model.EventInstance
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +43,7 @@ class CalendarPanelViewTest {
 
         assertEquals(View.GONE, view.grantAccessButton.visibility)
         assertEquals(1, view.todayEventsView.childCount)
+        assertTrue(view.monthGridView.isEnabled)
     }
 
     @Test
@@ -59,6 +61,7 @@ class CalendarPanelViewTest {
             context.getString(R.string.calendar_no_events_today),
             (view.todayEventsView.getChildAt(0) as TextView).text,
         )
+        assertFalse(view.monthGridView.isEnabled)
     }
 
     @Test
@@ -79,5 +82,6 @@ class CalendarPanelViewTest {
 
         assertEquals(View.GONE, view.grantAccessButton.visibility)
         assertEquals(1, view.todayEventsView.childCount)
+        assertTrue(view.monthGridView.isEnabled)
     }
 }
