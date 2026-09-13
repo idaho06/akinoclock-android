@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1
+
+Small fixes and interactions on the weather strip and calendar.
+
+- Tap a day in the month grid to open it in the device's Calendar app.
+- Tap the weather strip to open a full forecast page for the current city, with correct units
+  and time format for that location.
+- The month grid now refreshes automatically at local midnight instead of waiting for another
+  trigger to notice the day has changed.
+- Larger month grid text and more spacing before the events list.
+
 ## 1.1.0
 
 Adds a weather strip and an alarm hand on the clock face.
