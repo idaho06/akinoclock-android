@@ -12,6 +12,7 @@ object WeatherLocationJson {
         put("name", location.name)
         put("lat", location.latitude)
         put("lon", location.longitude)
+        location.country?.let { put("country", it) }
     }.toString()
 
     fun decode(json: String): WeatherLocation? = try {
@@ -20,6 +21,7 @@ object WeatherLocationJson {
             name = obj.getString("name"),
             latitude = obj.getDouble("lat"),
             longitude = obj.getDouble("lon"),
+            country = obj.optString("country", "").takeIf { it.isNotEmpty() },
         )
     } catch (e: JSONException) {
         null

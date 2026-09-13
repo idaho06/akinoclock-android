@@ -29,6 +29,7 @@ object GeocodingJson {
             name = label,
             latitude = obj.getDouble("latitude"),
             longitude = obj.getDouble("longitude"),
+            country = country,
         )
     }
 }

@@ -20,7 +20,7 @@ class GeocodingJsonTest {
         val first = results[0]
         // The fixture's admin1 ("Madrid") equals the city name, so it's deduped rather than
         // shown twice ("Madrid, Madrid, Spain" would read oddly to a user).
-        assertEquals(WeatherLocation("Madrid, Spain", 40.4165, -3.70256), first)
+        assertEquals(WeatherLocation("Madrid, Spain", 40.4165, -3.70256, country = "Spain"), first)
     }
 
     @Test
