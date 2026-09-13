@@ -107,31 +107,25 @@ class MainActivity : ComponentActivity() {
 
     private fun openHeadline(headline: Headline) {
         val link = headline.link ?: return
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-        if (intent.resolveActivity(packageManager) != null) {
-            startActivity(intent)
-        } else {
-            Toast.makeText(this, R.string.rss_no_browser, Toast.LENGTH_SHORT).show()
-        }
+        openExternally(Uri.parse(link), R.string.rss_no_browser)
     }
 
     private fun openForecast(location: WeatherLocation) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WeatherForecastUrl.build(location)))
-        if (intent.resolveActivity(packageManager) != null) {
-            startActivity(intent)
-        } else {
-            Toast.makeText(this, R.string.rss_no_browser, Toast.LENGTH_SHORT).show()
-        }
+        openExternally(Uri.parse(WeatherForecastUrl.build(location)), R.string.rss_no_browser)
     }
 
     private fun openCalendarDate(date: LocalDate) {
         val millis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val uri = CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(millis.toString()).build()
+        openExternally(uri, R.string.calendar_no_app)
+    }
+
+    private fun openExternally(uri: Uri, noAppMessage: Int) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {
-            Toast.makeText(this, R.string.calendar_no_app, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, noAppMessage, Toast.LENGTH_SHORT).show()
         }
     }
 
