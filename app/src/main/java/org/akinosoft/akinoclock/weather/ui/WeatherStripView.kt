@@ -9,13 +9,15 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import org.akinosoft.akinoclock.R
 import org.akinosoft.akinoclock.weather.model.DayForecast
+import org.akinosoft.akinoclock.weather.model.WeatherLocation
 import org.akinosoft.akinoclock.weather.model.WeatherReport
 import org.akinosoft.akinoclock.weather.model.WeatherUiState
 
 /**
  * A fixed-height strip showing today's condition/temperature/min-max plus a two-day forecast.
  * [render] toggles between the three [WeatherUiState] variants; `NoLocation` shows only the
- * placeholder (tap fires [onPlaceholderClick], wired by `MainActivity` to open Settings).
+ * placeholder (tap fires [onPlaceholderClick], wired by `MainActivity` to open Settings). While
+ * `Showing`, tapping anywhere on the strip fires [onForecastClick] with the current location.
  */
 class WeatherStripView @JvmOverloads constructor(
     context: Context,
@@ -23,6 +25,9 @@ class WeatherStripView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs) {
 
     var onPlaceholderClick: (() -> Unit)? = null
+    var onForecastClick: ((WeatherLocation) -> Unit)? = null
+
+    private var location: WeatherLocation? = null
 
     private val todayIcon: ImageView
     private val todayColumn: View
@@ -50,19 +55,24 @@ class WeatherStripView @JvmOverloads constructor(
 
         content = listOf(todayIcon, todayColumn, forecastDay1, forecastDay2, staleGlyph)
         placeholderText.setOnClickListener { onPlaceholderClick?.invoke() }
+        isClickable = true
+        setOnClickListener { location?.let { onForecastClick?.invoke(it) } }
     }
 
     fun render(state: WeatherUiState) {
         when (state) {
             WeatherUiState.NoLocation -> {
+                location = null
                 placeholderText.setText(R.string.weather_no_location_placeholder)
                 showOnly(placeholderText)
             }
             WeatherUiState.Loading -> {
+                location = null
                 placeholderText.setText(R.string.weather_loading_placeholder)
                 showOnly(placeholderText)
             }
             is WeatherUiState.Showing -> {
+                location = state.location
                 showOnly(*content.toTypedArray())
                 staleGlyph.visibility = if (state.stale) VISIBLE else GONE
                 bind(state.report)

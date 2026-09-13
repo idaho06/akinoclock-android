@@ -222,6 +222,7 @@ class WeatherViewModelTest {
         val state = viewModel.uiState.value as WeatherUiState.Showing
         assertTrue(!state.stale)
         assertEquals(20.0, state.report.current.temperatureC, 0.0)
+        assertEquals(madrid, state.location)
     }
 
     @Test

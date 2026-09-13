@@ -112,7 +112,7 @@ class WeatherViewModel(
         when {
             location == null -> WeatherUiState.NoLocation
             report == null -> WeatherUiState.Loading
-            else -> WeatherUiState.Showing(report, stale = isStale(report, backingOff))
+            else -> WeatherUiState.Showing(report, location, stale = isStale(report, backingOff))
         }
 
     /** Stale once the backoff is actively retrying (the latest attempt failed) or the shown

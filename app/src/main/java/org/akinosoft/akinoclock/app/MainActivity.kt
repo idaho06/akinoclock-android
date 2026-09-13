@@ -22,6 +22,8 @@ import org.akinosoft.akinoclock.databinding.ActivityMainBinding
 import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.rss.ui.RssViewModel
 import org.akinosoft.akinoclock.settings.ui.SettingsActivity
+import org.akinosoft.akinoclock.weather.model.WeatherLocation
+import org.akinosoft.akinoclock.weather.ui.WeatherForecastUrl
 import org.akinosoft.akinoclock.weather.ui.WeatherViewModel
 
 class MainActivity : ComponentActivity() {
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
         binding.rssCarousel.onHeadlineClick = { headline -> openHeadline(headline) }
         binding.settingsButton.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
         binding.weatherStrip.onPlaceholderClick = { startActivity(Intent(this, SettingsActivity::class.java)) }
+        binding.weatherStrip.onForecastClick = { location -> openForecast(location) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -101,6 +104,15 @@ class MainActivity : ComponentActivity() {
     private fun openHeadline(headline: Headline) {
         val link = headline.link ?: return
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, R.string.rss_no_browser, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openForecast(location: WeatherLocation) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WeatherForecastUrl.build(location)))
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {

@@ -9,6 +9,7 @@ import org.akinosoft.akinoclock.R
 import org.akinosoft.akinoclock.weather.model.CurrentWeather
 import org.akinosoft.akinoclock.weather.model.DayForecast
 import org.akinosoft.akinoclock.weather.model.WeatherCondition
+import org.akinosoft.akinoclock.weather.model.WeatherLocation
 import org.akinosoft.akinoclock.weather.model.WeatherReport
 import org.akinosoft.akinoclock.weather.model.WeatherUiState
 import org.junit.Assert.assertEquals
@@ -29,6 +30,8 @@ class WeatherStripViewTest {
         view = WeatherStripView(ApplicationProvider.getApplicationContext())
     }
 
+    private val madrid = WeatherLocation(name = "Madrid, Spain", latitude = 40.4168, longitude = -3.7038)
+
     private fun report() = WeatherReport(
         current = CurrentWeather(temperatureC = 20.4, condition = WeatherCondition.CLEAR, isDay = true),
         days = listOf(
@@ -41,7 +44,7 @@ class WeatherStripViewTest {
 
     @Test
     fun `Showing renders current temperature, min-max and the two forecast days`() {
-        view.render(WeatherUiState.Showing(report(), stale = false))
+        view.render(WeatherUiState.Showing(report(), madrid, stale = false))
 
         assertEquals("20°C", view.findViewById<TextView>(R.id.todayTemp).text.toString())
         assertEquals("16° / 32°", view.findViewById<TextView>(R.id.todayMinMax).text.toString())
@@ -70,7 +73,7 @@ class WeatherStripViewTest {
 
     @Test
     fun `Showing with stale true shows the stale glyph`() {
-        view.render(WeatherUiState.Showing(report(), stale = true))
+        view.render(WeatherUiState.Showing(report(), madrid, stale = true))
 
         assertEquals(android.view.View.VISIBLE, view.findViewById<android.view.View>(R.id.staleGlyph).visibility)
     }
@@ -95,12 +98,36 @@ class WeatherStripViewTest {
     }
 
     @Test
+    fun `tapping the strip while Showing invokes onForecastClick with the current location`() {
+        var clickedLocation: WeatherLocation? = null
+        view.onForecastClick = { clickedLocation = it }
+
+        view.render(WeatherUiState.Showing(report(), madrid, stale = false))
+        view.performClick()
+
+        assertEquals(madrid, clickedLocation)
+    }
+
+    @Test
+    fun `tapping the strip while NoLocation or Loading does not invoke onForecastClick`() {
+        var clicked = false
+        view.onForecastClick = { clicked = true }
+
+        view.render(WeatherUiState.NoLocation)
+        view.performClick()
+        view.render(WeatherUiState.Loading)
+        view.performClick()
+
+        assertFalse(clicked)
+    }
+
+    @Test
     fun `weekday labels reflect a locale change without recreating the view`() {
         val originalLocale = java.util.Locale.getDefault()
         try {
             java.util.Locale.setDefault(java.util.Locale.FRENCH)
 
-            view.render(WeatherUiState.Showing(report(), stale = false))
+            view.render(WeatherUiState.Showing(report(), madrid, stale = false))
 
             val day1 = view.findViewById<android.view.View>(R.id.forecastDay1)
             val expected = java.time.format.DateTimeFormatter.ofPattern("EEE", java.util.Locale.FRENCH)
