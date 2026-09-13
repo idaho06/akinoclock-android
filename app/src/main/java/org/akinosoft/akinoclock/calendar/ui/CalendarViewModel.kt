@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import java.time.Clock
+import java.time.Duration
 import java.time.YearMonth
 import java.time.ZonedDateTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,11 +29,11 @@ import org.akinosoft.akinoclock.calendar.model.CalendarUiState
 private const val TAG = "CalendarViewModel"
 
 /**
- * The [CalendarRepository.changes] subscription only runs between [start] and [stop] —
- * mirrors `ClockView.start()/stop()`, driven by the host Activity's `onStart`/`onStop` so
- * the ContentObserver isn't held while not visible. [start] always triggers a reload, even
- * if already started, since `onStart` can fire again (e.g. returning from system Settings)
- * without an intervening `onStop`, and the permission state may have changed meanwhile.
+ * The [CalendarRepository.changes] subscription and the local-midnight refresh loop only run
+ * between [start] and [stop] — mirrors `ClockView.start()/stop()`, driven by the host Activity's
+ * `onStart`/`onStop` so the ContentObserver isn't held while not visible. [start] always triggers
+ * a reload, even if already started, since `onStart` can fire again (e.g. returning from system
+ * Settings) without an intervening `onStop`, and the permission state may have changed meanwhile.
  */
 class CalendarViewModel(
     private val repository: CalendarRepository,
@@ -44,6 +46,7 @@ class CalendarViewModel(
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
     private var changesJob: Job? = null
+    private var midnightJob: Job? = null
 
     fun start() {
         if (changesJob?.isActive != true) {
@@ -51,12 +54,33 @@ class CalendarViewModel(
                 repository.changes().collect { refresh() }
             }
         }
+        // Nothing else refreshes the grid across a local-midnight rollover if the app is never
+        // backgrounded and the calendar provider stays quiet, so isToday would keep pointing at
+        // yesterday until some unrelated event (e.g. an onStop/onStart cycle) happened to refresh.
+        if (midnightJob?.isActive != true) {
+            midnightJob = viewModelScope.launch { midnightLoop() }
+        }
         refresh()
     }
 
     fun stop() {
         changesJob?.cancel()
         changesJob = null
+        midnightJob?.cancel()
+        midnightJob = null
+    }
+
+    private suspend fun midnightLoop() {
+        while (true) {
+            delay(millisUntilNextMidnight())
+            refresh()
+        }
+    }
+
+    private fun millisUntilNextMidnight(): Long {
+        val now = ZonedDateTime.now(clock)
+        val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(clock.zone)
+        return Duration.between(now, nextMidnight).toMillis()
     }
 
     fun refresh() {

@@ -17,7 +17,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import org.akinosoft.akinoclock.calendar.data.CalendarRepository
 import org.akinosoft.akinoclock.calendar.data.PermissionChecker
 import org.akinosoft.akinoclock.calendar.model.CalendarUiState
@@ -30,6 +31,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+/** [CalendarViewModel.start] now also runs a never-idle local-midnight refresh loop (mirrors
+ * [org.akinosoft.akinoclock.weather.ui.WeatherViewModel]'s scheduling loop), so tests use
+ * `runCurrent`/`advanceTimeBy` while started and only reach for `advanceUntilIdle` after `stop`. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class CalendarViewModelTest {
@@ -60,7 +64,7 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         val state = viewModel.uiState.value as CalendarUiState.NotGranted
         assertEquals(42, state.grid.cells.size)
@@ -87,7 +91,8 @@ class CalendarViewModelTest {
         val states = mutableListOf<CalendarUiState>()
         val job = launch { viewModel.uiState.toList(states) }
         viewModel.start()
-        advanceUntilIdle()
+        advanceTimeBy(11)
+        runCurrent()
         job.cancel()
 
         assertEquals(CalendarUiState.Loading, states.first())
@@ -109,10 +114,10 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         viewModel.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         coVerify(exactly = 2) { repository.instancesBetween(any(), any()) }
     }
@@ -131,10 +136,10 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         changes.emit(Unit)
-        advanceUntilIdle()
+        runCurrent()
 
         coVerify(exactly = 2) { repository.instancesBetween(any(), any()) }
     }
@@ -153,11 +158,11 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         viewModel.stop()
         changes.emit(Unit)
-        advanceUntilIdle()
+        runCurrent()
 
         coVerify(exactly = 1) { repository.instancesBetween(any(), any()) }
     }
@@ -176,13 +181,13 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
         viewModel.stop()
 
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
         changes.emit(Unit)
-        advanceUntilIdle()
+        runCurrent()
 
         coVerify(exactly = 3) { repository.instancesBetween(any(), any()) }
     }
@@ -204,10 +209,10 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         coVerify(exactly = 2) { repository.instancesBetween(any(), any()) }
     }
@@ -231,14 +236,51 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         val firstGrid = (viewModel.uiState.value as CalendarUiState.Granted).grid
         assertTrue(firstGrid.cells.first { it.date == LocalDate.of(2026, 9, 25) }.isToday)
 
         now = Instant.parse("2026-09-25T22:01:00Z") // 2026-09-26T00:01 in Madrid (+02:00)
         viewModel.refresh()
-        advanceUntilIdle()
+        runCurrent()
+
+        val secondGrid = (viewModel.uiState.value as CalendarUiState.Granted).grid
+        assertFalse(secondGrid.cells.first { it.date == LocalDate.of(2026, 9, 25) }.isToday)
+        assertTrue(secondGrid.cells.first { it.date == LocalDate.of(2026, 9, 26) }.isToday)
+    }
+
+    @Test
+    fun `the grid automatically advances to the next day at local midnight, with no explicit refresh`() = runViewModelTest {
+        // Reproduces a real device bug: leaving the app on screen overnight (no onStop/onStart
+        // cycle, no calendar content change) left isToday pointing at yesterday until something
+        // else — e.g. switching apps and back — happened to call refresh().
+        val repository = mockk<CalendarRepository> {
+            coEvery { instancesBetween(any(), any()) } returns emptyList()
+            every { changes() } returns emptyFlow()
+        }
+        val permissionChecker = mockk<PermissionChecker> { every { hasReadCalendar() } returns true }
+        var now = Instant.parse("2026-09-25T21:59:00Z")
+        val clock = object : Clock() {
+            override fun instant() = now
+            override fun getZone() = madrid
+            override fun withZone(zone: ZoneId) = this
+        }
+
+        val viewModel = CalendarViewModel(
+            repository, permissionChecker, clock,
+            ioDispatcher = StandardTestDispatcher(testScheduler),
+        )
+        viewModel.start()
+        runCurrent()
+
+        val firstGrid = (viewModel.uiState.value as CalendarUiState.Granted).grid
+        assertTrue(firstGrid.cells.first { it.date == LocalDate.of(2026, 9, 25) }.isToday)
+
+        // 2026-09-26T00:01 in Madrid (+02:00), past the local midnight the clock started before.
+        now = Instant.parse("2026-09-25T22:01:00Z")
+        advanceTimeBy(120_001L)
+        runCurrent()
 
         val secondGrid = (viewModel.uiState.value as CalendarUiState.Granted).grid
         assertFalse(secondGrid.cells.first { it.date == LocalDate.of(2026, 9, 25) }.isToday)
@@ -259,11 +301,11 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
         val stateAfterFirstLoad = viewModel.uiState.value
 
         viewModel.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(stateAfterFirstLoad, viewModel.uiState.value)
         assertTrue(viewModel.uiState.value is CalendarUiState.Granted)
@@ -287,7 +329,7 @@ class CalendarViewModelTest {
             ioDispatcher = StandardTestDispatcher(testScheduler),
         )
         viewModel.start()
-        advanceUntilIdle()
+        runCurrent()
 
         assertTrue(viewModel.uiState.value is CalendarUiState.NotGranted)
     }
