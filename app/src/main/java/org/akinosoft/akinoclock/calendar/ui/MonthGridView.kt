@@ -70,7 +70,7 @@ open class MonthGridView @JvmOverloads constructor(
 
         for (col in 0 until GRID_COLUMNS) {
             val label = DayOfWeek.MONDAY.plus(col.toLong()).getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            drawCenteredText(canvas, label, headerRect(col), palette.dim, textSizeRatio = 0.38f)
+            drawCenteredText(canvas, label, headerRect(col), palette.dim, textSizeRatio = 0.44f)
         }
 
         currentGrid.cells.forEachIndexed { index, cell ->
@@ -78,7 +78,7 @@ open class MonthGridView @JvmOverloads constructor(
 
             if (cell.isToday) {
                 paint.color = palette.today
-                val radius = minOf(rect.width(), rect.height()) * 0.35f
+                val radius = minOf(rect.width(), rect.height()) * 0.40f
                 canvas.drawCircle(rect.centerX(), rect.centerY(), radius, paint)
             }
 
@@ -87,7 +87,7 @@ open class MonthGridView @JvmOverloads constructor(
                 cell.inCurrentMonth -> palette.normal
                 else -> palette.dim
             }
-            drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.48f)
+            drawCenteredText(canvas, cell.date.dayOfMonth.toString(), rect, textColor, textSizeRatio = 0.54f)
 
             if (cell.hasEvents) {
                 paint.color = palette.accent
