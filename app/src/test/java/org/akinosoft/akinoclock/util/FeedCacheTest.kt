@@ -6,6 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
+import org.akinosoft.akinoclock.util.net.CacheValidators
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -190,5 +191,60 @@ class FeedCacheTest {
         cachedFile.mkdir()
 
         assertNull(cache.read(url))
+    }
+
+    @Test
+    fun `validators written with the bytes are read back verbatim`() {
+        val cache = cache()
+        val url = "https://example.com/feed.xml"
+        val validators = CacheValidators(etag = "W/\"abc-123\"", lastModified = "Sat, 26 Sep 2026 10:00:00 GMT")
+
+        cache.write(url, "x".toByteArray(), validators)
+
+        assertEquals(validators, cache.readValidators(url))
+    }
+
+    @Test
+    fun `a validator the server did not send is read back as null`() {
+        val cache = cache()
+        val url = "https://example.com/feed.xml"
+
+        cache.write(url, "x".toByteArray(), CacheValidators(etag = "\"abc\"", lastModified = null))
+
+        assertEquals(CacheValidators(etag = "\"abc\"", lastModified = null), cache.readValidators(url))
+    }
+
+    @Test
+    fun `readValidators is null when nothing was stored`() {
+        val cache = cache()
+        val url = "https://example.com/feed.xml"
+
+        assertNull(cache.readValidators(url))
+        cache.write(url, "x".toByteArray())
+        assertNull(cache.readValidators(url))
+    }
+
+    @Test
+    fun `rewriting without validators drops the previously stored ones`() {
+        val cache = cache()
+        val url = "https://example.com/feed.xml"
+        cache.write(url, "x".toByteArray(), CacheValidators(etag = "\"abc\"", lastModified = null))
+
+        cache.write(url, "y".toByteArray())
+
+        assertNull(cache.readValidators(url))
+    }
+
+    @Test
+    fun `clear also deletes the stored validators`() {
+        val dir = tempFolder.newFolder("rss-cache")
+        val cache = FeedCache(dir) { 1_000L }
+        val url = "https://example.com/feed.xml"
+        cache.write(url, "x".toByteArray(), CacheValidators(etag = "\"abc\"", lastModified = null))
+
+        cache.clear(url)
+
+        assertNull(cache.readValidators(url))
+        assertEquals(0, dir.listFiles()?.size)
     }
 }
