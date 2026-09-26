@@ -60,8 +60,8 @@ class FeedCache(
     }
 
     /**
-     * Returns the current cache file for [key], migrating a pre-`.cache`-extension file left
-     * over from before FeedCache was shared between RSS and weather, if one is found.
+     * Returns the cache file for [key], renaming an `.xml`-suffixed cache file for [key] to the
+     * `.cache` extension if one is found.
      */
     private fun migrateLegacyFileIfPresent(key: String): File {
         val file = bodyFile(key)

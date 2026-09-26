@@ -146,7 +146,7 @@ class ContentProviderCalendarRepositoryTest {
 
     @Test
     fun `changes does not crash when registerContentObserver throws SecurityException`() = runTest {
-        // Reproduces a real crash: registerContentObserver on the CalendarContract authority
+        // On the device, registerContentObserver on the CalendarContract authority
         // throws SecurityException immediately when READ_CALENDAR isn't granted (unlike a
         // query, which the provider just fails). The Flow must not propagate that exception
         // to its collector.

@@ -10,8 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Fetches a resource over HTTP(S) with `HttpURLConnection` — no extra dependency, per the standing
- * "minimal dependencies" constraint. Response bodies are capped at [MAX_BODY_BYTES] while
+ * Fetches a resource over HTTP(S) with `HttpURLConnection`, so the app needs no HTTP library.
+ * Response bodies are capped at [MAX_BODY_BYTES] while
  * streaming, not after buffering the whole thing into memory.
  */
 class HttpUrlConnectionFetcher(

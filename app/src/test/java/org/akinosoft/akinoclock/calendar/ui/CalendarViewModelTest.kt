@@ -31,7 +31,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** [CalendarViewModel.start] now also runs a never-idle local-midnight refresh loop (mirrors
+/** [CalendarViewModel.start] also runs a never-idle local-midnight refresh loop (mirrors
  * [org.akinosoft.akinoclock.weather.ui.WeatherViewModel]'s scheduling loop), so tests use
  * `runCurrent`/`advanceTimeBy` while started and only reach for `advanceUntilIdle` after `stop`. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -256,10 +256,10 @@ class CalendarViewModelTest {
 
     @Test
     fun `start called again while already started still re-queries`() = runViewModelTest {
-        // Reproduces a real device bug: granting the permission via system Settings and
-        // returning to the app fires onStart -> start() again without an intervening onStop
-        // (the observer's callbackFlow never completes on its own), so start() must not skip
-        // the refresh just because a subscription is already active.
+        // On the device, granting the permission via system Settings and returning to the app
+        // fires onStart -> start() again without an intervening onStop (the observer's
+        // callbackFlow never completes on its own), so start() must not skip the refresh just
+        // because a subscription is already active.
         val repository = mockk<CalendarRepository> {
             coEvery { instancesBetween(any(), any()) } returns emptyList()
             every { changes() } returns MutableSharedFlow()
@@ -314,9 +314,8 @@ class CalendarViewModelTest {
 
     @Test
     fun `the grid automatically advances to the next day at local midnight, with no explicit refresh`() = runViewModelTest {
-        // Reproduces a real device bug: leaving the app on screen overnight (no onStop/onStart
-        // cycle, no calendar content change) left isToday pointing at yesterday until something
-        // else — e.g. switching apps and back — happened to call refresh().
+        // On the device, the app stays on screen overnight with no onStop/onStart cycle and no
+        // calendar content change, so nothing but the midnight loop moves isToday to the new day.
         val repository = mockk<CalendarRepository> {
             coEvery { instancesBetween(any(), any()) } returns emptyList()
             every { changes() } returns emptyFlow()

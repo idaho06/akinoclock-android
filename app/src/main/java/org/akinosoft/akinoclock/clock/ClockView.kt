@@ -130,8 +130,8 @@ open class ClockView @JvmOverloads constructor(
 
     // Both visibility callbacks are wired to the same dispatch: onVisibilityAggregated is the
     // correct modern signal, but onVisibilityChanged is kept alongside it because the aggregated
-    // callback alone was not observed to fire reliably for a directly-set Activity content view
-    // under Robolectric. start()/stop() are idempotent, so a duplicate call from both firing is
+    // callback alone does not fire reliably for a directly-set Activity content view under
+    // Robolectric. start()/stop() are idempotent, so a duplicate call from both firing is
     // harmless.
     override fun onVisibilityAggregated(isVisible: Boolean) {
         super.onVisibilityAggregated(isVisible)

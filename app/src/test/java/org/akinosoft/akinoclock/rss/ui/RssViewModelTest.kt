@@ -212,7 +212,7 @@ class RssViewModelTest {
     @Test
     fun `a feed change while stopped still forces an immediate refresh with the new list on the next start`() =
         runViewModelTest {
-            // Reproduces a real device bug: editing feeds in SettingsActivity happens while
+            // On the device, editing feeds in SettingsActivity happens while
             // MainActivity (and its RssViewModel) is stopped, so the feed-change watcher job that
             // triggers onFeedsChanged() is not running to observe the transition — it only sees
             // the already-updated list as its "initial" value once re-subscribed by start(), and
