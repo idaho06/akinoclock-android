@@ -1,5 +1,6 @@
 package org.akinosoft.akinoclock.app
 
+import android.os.Looper
 import android.view.WindowManager
 import android.widget.LinearLayout
 import androidx.test.core.app.ApplicationProvider
@@ -20,6 +21,7 @@ import org.akinosoft.akinoclock.clock.alarm.NextAlarmSource
 import org.akinosoft.akinoclock.rss.data.RefreshOutcome
 import org.akinosoft.akinoclock.rss.data.RssRepository
 import org.akinosoft.akinoclock.rss.model.FeedConfig
+import org.akinosoft.akinoclock.rss.model.Headline
 import org.akinosoft.akinoclock.settings.data.SettingsRepository
 import org.akinosoft.akinoclock.settings.ui.SettingsActivity
 import org.akinosoft.akinoclock.util.FakePeriodicScheduler
@@ -61,8 +63,8 @@ private class FakeNextAlarmSource : NextAlarmSource {
     override fun changes(): Flow<Instant?> = state
 }
 
-private fun fakeRssRepository(): RssRepository = mockk {
-    every { headlines() } returns MutableStateFlow(emptyList())
+private fun fakeRssRepository(headlines: List<Headline> = emptyList()): RssRepository = mockk {
+    every { headlines() } returns MutableStateFlow(headlines)
     every { status() } returns MutableStateFlow(emptyMap())
     coEvery { refresh(any()) } returns RefreshOutcome.SUCCESS
 }
@@ -157,6 +159,26 @@ class MainActivityTest {
 
         controller.pause()
         assertFalse(fakeScheduler.isRunning)
+    }
+
+    @Test
+    fun `starting the activity runs the headline rotation, stopping pauses it`() {
+        val headlines = listOf("h1", "h2").map { Headline("feed", it, "https://example.com/$it", null) }
+        installFakeContainer(rssRepository = fakeRssRepository(headlines))
+        val controller = Robolectric.buildActivity(MainActivity::class.java).create()
+        val fakeScheduler = FakePeriodicScheduler()
+        controller.get().binding.rssCarousel.scheduler = fakeScheduler
+
+        controller.start()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(fakeScheduler.isRunning)
+
+        controller.stop()
+        assertFalse(fakeScheduler.isRunning)
+
+        controller.start()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(fakeScheduler.isRunning)
     }
 
     @Test

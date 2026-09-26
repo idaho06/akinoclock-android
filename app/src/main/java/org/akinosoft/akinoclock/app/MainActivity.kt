@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
         viewModel.start()
         rssViewModel.start()
         weatherViewModel.start()
+        binding.rssCarousel.resumeRotation()
         updateGrantAccessButtonLabel()
     }
 
@@ -93,6 +94,7 @@ class MainActivity : ComponentActivity() {
         viewModel.stop()
         rssViewModel.stop()
         weatherViewModel.stop()
+        binding.rssCarousel.pauseRotation()
     }
 
     override fun onResume() {
