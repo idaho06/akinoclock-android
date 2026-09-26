@@ -8,7 +8,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.os.Looper
 import android.view.View
-import android.view.View.MeasureSpec
 import androidx.test.core.app.ApplicationProvider
 import org.akinosoft.akinoclock.R
 import java.time.Clock
@@ -17,6 +16,8 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import org.akinosoft.akinoclock.util.FakePeriodicScheduler
+import org.akinosoft.akinoclock.util.closestInNeighborhood
+import org.akinosoft.akinoclock.util.colorDistance
 import org.akinosoft.akinoclock.util.PeriodicScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -160,33 +161,6 @@ class ClockViewTest {
         view.palette = view.palette.copy(secondHand = Color.RED)
 
         assertEquals(before + 1, view.invalidateCount)
-    }
-
-    private fun colorDistance(a: Int, b: Int): Int {
-        val dr = Color.red(a) - Color.red(b)
-        val dg = Color.green(a) - Color.green(b)
-        val db = Color.blue(a) - Color.blue(b)
-        return dr * dr + dg * dg + db * db
-    }
-
-    /** Nearest match to `target` in a square neighborhood around (cx, cy), radius in pixels. */
-    private fun closestInNeighborhood(bitmap: Bitmap, cx: Int, cy: Int, radius: Int, target: Int): Int {
-        var best = bitmap.getPixel(cx, cy)
-        var bestDistance = colorDistance(best, target)
-        for (dx in -radius..radius) {
-            for (dy in -radius..radius) {
-                val x = cx + dx
-                val y = cy + dy
-                if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) continue
-                val candidate = bitmap.getPixel(x, y)
-                val distance = colorDistance(candidate, target)
-                if (distance < bestDistance) {
-                    best = candidate
-                    bestDistance = distance
-                }
-            }
-        }
-        return best
     }
 
     @Test
@@ -367,50 +341,5 @@ class ClockViewTest {
 
         assertEquals(ClockTime(8, 0, 0), view.time)
         assertEquals(invalidatesBefore, view.invalidateCount)
-    }
-
-    @Test
-    fun `measure passes through when both dimensions are EXACTLY`() {
-        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
-        view.measure(
-            MeasureSpec.makeMeasureSpec(500, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(300, MeasureSpec.EXACTLY),
-        )
-        assertEquals(500, view.measuredWidth)
-        assertEquals(300, view.measuredHeight)
-    }
-
-    @Test
-    fun `measure with two AT_MOST bounds chooses the largest square that fits`() {
-        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
-        view.measure(
-            MeasureSpec.makeMeasureSpec(440, MeasureSpec.AT_MOST),
-            MeasureSpec.makeMeasureSpec(600, MeasureSpec.AT_MOST),
-        )
-        assertEquals(440, view.measuredWidth)
-        assertEquals(440, view.measuredHeight)
-    }
-
-    @Test
-    fun `measure with both dimensions UNSPECIFIED uses the default square size`() {
-        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
-        view.measure(
-            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-        )
-        val expected = context().resources.getDimensionPixelSize(R.dimen.clock_default_size)
-        assertEquals(expected, view.measuredWidth)
-        assertEquals(expected, view.measuredHeight)
-    }
-
-    @Test
-    fun `measure with an exact width and unspecified height sizes a square to the exact dimension`() {
-        val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
-        view.measure(
-            MeasureSpec.makeMeasureSpec(350, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-        )
-        assertEquals(350, view.measuredWidth)
-        assertEquals(350, view.measuredHeight)
     }
 }

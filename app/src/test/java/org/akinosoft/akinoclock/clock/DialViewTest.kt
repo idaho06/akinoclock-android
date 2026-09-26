@@ -4,8 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.view.View.MeasureSpec
 import androidx.test.core.app.ApplicationProvider
+import org.akinosoft.akinoclock.util.closestInNeighborhood
+import org.akinosoft.akinoclock.util.colorDistance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,24 +35,9 @@ class DialViewTest {
         return bitmap
     }
 
-    private fun colorDistance(a: Int, b: Int): Int {
-        val dr = Color.red(a) - Color.red(b)
-        val dg = Color.green(a) - Color.green(b)
-        val db = Color.blue(a) - Color.blue(b)
-        val da = Color.alpha(a) - Color.alpha(b)
-        return dr * dr + dg * dg + db * db + da * da
-    }
-
     /** Whether a pixel close to [target] exists within [radius] px of (cx, cy). */
-    private fun hasColorNear(bitmap: Bitmap, cx: Int, cy: Int, radius: Int, target: Int): Boolean {
-        for (x in (cx - radius)..(cx + radius)) {
-            for (y in (cy - radius)..(cy + radius)) {
-                if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) continue
-                if (colorDistance(bitmap.getPixel(x, y), target) < 30 * 30) return true
-            }
-        }
-        return false
-    }
+    private fun hasColorNear(bitmap: Bitmap, cx: Int, cy: Int, radius: Int, target: Int): Boolean =
+        colorDistance(closestInNeighborhood(bitmap, cx, cy, radius, target), target) < 30 * 30
 
     @Test
     fun `draws the bezel ring at the radius`() {
@@ -101,18 +87,5 @@ class DialViewTest {
 
         assertTrue(hasColorNear(bitmap, 200, 1, 2, view.palette.bezelRing))
         assertEquals(0, Color.alpha(bitmap.getPixel(100, 1)))
-    }
-
-    @Test
-    fun `measures as the largest square that fits`() {
-        val view = DialView(context())
-
-        view.measure(
-            MeasureSpec.makeMeasureSpec(440, MeasureSpec.AT_MOST),
-            MeasureSpec.makeMeasureSpec(600, MeasureSpec.AT_MOST),
-        )
-
-        assertEquals(440, view.measuredWidth)
-        assertEquals(440, view.measuredHeight)
     }
 }

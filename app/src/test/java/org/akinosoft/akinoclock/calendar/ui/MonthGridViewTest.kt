@@ -8,6 +8,8 @@ import androidx.test.core.app.ApplicationProvider
 import java.time.LocalDate
 import java.time.YearMonth
 import org.akinosoft.akinoclock.calendar.logic.MonthGridBuilder
+import org.akinosoft.akinoclock.util.closestInNeighborhood
+import org.akinosoft.akinoclock.util.colorDistance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -22,19 +24,8 @@ class MonthGridViewTest {
     private val eventDays = setOf(LocalDate.of(2026, 9, 26))
     private val grid = MonthGridBuilder.build(month, today, eventDays)
 
-    private fun colorDistance(a: Int, b: Int): Int {
-        val dr = Color.red(a) - Color.red(b)
-        val dg = Color.green(a) - Color.green(b)
-        val db = Color.blue(a) - Color.blue(b)
-        return dr * dr + dg * dg + db * db
-    }
-
-    private fun closestNeighborhoodMatch(bitmap: Bitmap, centerX: Int, centerY: Int, target: Int): Int {
-        val neighborhood = (centerX - 5..centerX + 5).flatMap { x ->
-            (centerY - 5..centerY + 5).map { y -> bitmap.getPixel(x, y) }
-        }
-        return neighborhood.minByOrNull { colorDistance(it, target) }!!
-    }
+    private fun closestNeighborhoodMatch(bitmap: Bitmap, centerX: Int, centerY: Int, target: Int): Int =
+        closestInNeighborhood(bitmap, centerX, centerY, radius = 5, target = target)
 
     private fun drawnBitmap(view: MonthGridView, width: Int = 350, height: Int = 300): Bitmap {
         view.layout(0, 0, width, height)
