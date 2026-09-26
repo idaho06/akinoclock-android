@@ -170,8 +170,37 @@ class CalendarViewModelTest {
         runCurrent()
 
         changes.emit(Unit)
+        advanceTimeBy(501)
         runCurrent()
 
+        coVerify(exactly = 2) { repository.instancesBetween(any(), any()) }
+    }
+
+    @Test
+    fun `a burst of changes emissions re-queries once, after the burst settles`() = runViewModelTest {
+        val changes = MutableSharedFlow<Unit>()
+        val repository = mockk<CalendarRepository> {
+            coEvery { instancesBetween(any(), any()) } returns emptyList()
+            every { changes() } returns changes
+        }
+        val permissionChecker = mockk<PermissionChecker> { every { hasReadCalendar() } returns true }
+
+        val viewModel = CalendarViewModel(
+            repository, permissionChecker, clockAt(LocalDate.of(2026, 9, 25)),
+            ioDispatcher = StandardTestDispatcher(testScheduler),
+        )
+        viewModel.start()
+        runCurrent()
+
+        repeat(5) {
+            changes.emit(Unit)
+            advanceTimeBy(100)
+            runCurrent()
+        }
+        coVerify(exactly = 1) { repository.instancesBetween(any(), any()) }
+
+        advanceTimeBy(500)
+        runCurrent()
         coVerify(exactly = 2) { repository.instancesBetween(any(), any()) }
     }
 
@@ -193,6 +222,7 @@ class CalendarViewModelTest {
 
         viewModel.stop()
         changes.emit(Unit)
+        advanceTimeBy(501)
         runCurrent()
 
         coVerify(exactly = 1) { repository.instancesBetween(any(), any()) }
@@ -218,6 +248,7 @@ class CalendarViewModelTest {
         viewModel.start()
         runCurrent()
         changes.emit(Unit)
+        advanceTimeBy(501)
         runCurrent()
 
         coVerify(exactly = 3) { repository.instancesBetween(any(), any()) }

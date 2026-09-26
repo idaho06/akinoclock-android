@@ -11,11 +11,13 @@ import java.time.ZonedDateTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.akinosoft.akinoclock.calendar.data.CalendarRepository
@@ -27,6 +29,9 @@ import org.akinosoft.akinoclock.calendar.logic.UpcomingSelector
 import org.akinosoft.akinoclock.calendar.model.CalendarUiState
 
 private const val TAG = "CalendarViewModel"
+
+/** A provider sync sends a burst of change notifications; they're coalesced into one reload. */
+private const val CHANGES_DEBOUNCE_MILLIS = 500L
 
 /**
  * The [CalendarRepository.changes] subscription and the local-midnight refresh loop only run
@@ -49,10 +54,11 @@ class CalendarViewModel(
     private var midnightJob: Job? = null
     private var loadJob: Job? = null
 
+    @OptIn(FlowPreview::class)
     fun start() {
         if (changesJob?.isActive != true) {
             changesJob = viewModelScope.launch {
-                repository.changes().collect { refresh() }
+                repository.changes().debounce(CHANGES_DEBOUNCE_MILLIS).collect { refresh() }
             }
         }
         // Nothing else refreshes the grid across a local-midnight rollover if the app is never
