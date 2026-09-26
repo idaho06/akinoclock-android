@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.akinosoft.akinoclock.rss.model.FeedConfig
 import org.akinosoft.akinoclock.util.FeedCache
+import org.akinosoft.akinoclock.util.net.CacheValidators
 import org.akinosoft.akinoclock.util.net.FetchResult
 import org.akinosoft.akinoclock.util.net.HttpFetcher
 import org.junit.Assert.assertEquals
@@ -82,6 +83,34 @@ class DefaultRssRepositoryTest {
     }
 
     @Test
+    fun `refresh success stores the returned validators for the next conditional fetch`() = runTest {
+        val feed = FeedConfig(url = "https://example.com/feed.xml")
+        val cache = cache()
+        val validators = CacheValidators(etag = "\"v2\"", lastModified = null)
+        val fetcher = mockk<HttpFetcher>()
+        coEvery { fetcher.fetch(feed.url, null) } returns FetchResult.Success(rss("Fresh story"), validators)
+        val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
+
+        repository.refresh(listOf(feed))
+
+        assertEquals(validators, cache.readValidators(feed.url))
+    }
+
+    @Test
+    fun `a cached feed without stored validators is fetched unconditionally`() = runTest {
+        val feed = FeedConfig(url = "https://example.com/feed.xml")
+        val cache = cache()
+        cache.write(feed.url, rss("Cached story"))
+        val fetcher = mockk<HttpFetcher>()
+        coEvery { fetcher.fetch(feed.url, null) } returns FetchResult.NotModified
+        val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
+
+        repository.refresh(listOf(feed))
+
+        coVerify(exactly = 1) { fetcher.fetch(feed.url, null) }
+    }
+
+    @Test
     fun `refresh failure for one of three feeds keeps its cached headlines`() = runTest {
         val a = FeedConfig(url = "https://example.com/a.xml")
         val b = FeedConfig(url = "https://example.com/b.xml")
@@ -105,13 +134,14 @@ class DefaultRssRepositoryTest {
     }
 
     @Test
-    fun `304 touches cache mtime, leaves headlines unchanged, counts as success`() = runTest {
+    fun `stored validators are sent, and a 304 touches cache mtime, leaves headlines unchanged, counts as success`() = runTest {
         val feed = FeedConfig(url = "https://example.com/feed.xml")
         var currentMillis = 1_000L
         val cache = FeedCache(tempFolder.newFolder("rss-cache")) { currentMillis }
-        cache.write(feed.url, rss("Unchanged story"))
+        val validators = CacheValidators(etag = "\"v1\"", lastModified = "Sat, 26 Sep 2026 10:00:00 GMT")
+        cache.write(feed.url, rss("Unchanged story"), validators)
         val fetcher = mockk<HttpFetcher>()
-        coEvery { fetcher.fetch(feed.url, 1_000L) } returns FetchResult.NotModified
+        coEvery { fetcher.fetch(feed.url, validators) } returns FetchResult.NotModified
         val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
 
         currentMillis = 5_000L

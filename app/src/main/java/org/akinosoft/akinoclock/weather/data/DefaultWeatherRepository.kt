@@ -24,7 +24,7 @@ import org.akinosoft.akinoclock.weather.parse.WeatherParseException
  * Combines [HttpFetcher], [WeatherJson] and the (generic, reused) [FeedCache], keyed by the
  * forecast URL so a location change is automatically a cache miss. [primeFromCache] must be called
  * explicitly (typically by the ViewModel) rather than reading in the constructor, so a slow disk
- * read never blocks the thread that constructs this repository. No `If-Modified-Since`: Open-Meteo
+ * read never blocks the thread that constructs this repository. No conditional GET: Open-Meteo
  * doesn't honor it, and one small GET per hour is fine.
  */
 class DefaultWeatherRepository(
@@ -55,7 +55,7 @@ class DefaultWeatherRepository(
 
     override suspend fun refresh(location: WeatherLocation): WeatherRefreshOutcome = withContext(mutationDispatcher) {
         val url = forecastUrl(location)
-        when (val result = fetcher.fetch(url, ifModifiedSinceMillis = null)) {
+        when (val result = fetcher.fetch(url, validators = null)) {
             is FetchResult.Success -> {
                 val report = parseOrNull(result.bytes, Instant.now(clock))
                 if (report == null) {

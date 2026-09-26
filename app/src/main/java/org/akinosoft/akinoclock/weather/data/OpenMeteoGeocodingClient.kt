@@ -9,7 +9,7 @@ class OpenMeteoGeocodingClient(private val fetcher: HttpFetcher) : GeocodingClie
 
     override suspend fun search(query: String): GeocodingResult {
         val url = OpenMeteoUrls.geocoding(query)
-        return when (val result = fetcher.fetch(url, ifModifiedSinceMillis = null)) {
+        return when (val result = fetcher.fetch(url, validators = null)) {
             is FetchResult.Success -> try {
                 val locations = GeocodingJson.parse(String(result.bytes))
                 if (locations.isEmpty()) GeocodingResult.NoResults else GeocodingResult.Found(locations)

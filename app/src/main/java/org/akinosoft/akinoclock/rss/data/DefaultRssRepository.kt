@@ -85,10 +85,10 @@ class DefaultRssRepository(
 
     /** Fetches one feed and applies the result to the cache/headlines/status maps; returns success. */
     private suspend fun fetchOne(feed: FeedConfig): Boolean {
-        val ifModifiedSince = cache.read(feed.url)?.fetchedAtMillis
-        return when (val result = withContext(ioDispatcher) { fetcher.fetch(feed.url, ifModifiedSince) }) {
+        val validators = cache.readValidators(feed.url)
+        return when (val result = withContext(ioDispatcher) { fetcher.fetch(feed.url, validators) }) {
             is FetchResult.Success -> {
-                cache.write(feed.url, result.bytes)
+                cache.write(feed.url, result.bytes, result.validators)
                 headlinesByUrl[feed.url] = parseHeadlines(feed, result.bytes)
                 markSuccess(feed.url)
                 true

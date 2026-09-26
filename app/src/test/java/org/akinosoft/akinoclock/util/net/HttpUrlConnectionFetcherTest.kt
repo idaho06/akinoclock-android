@@ -141,19 +141,29 @@ class HttpUrlConnectionFetcherTest {
     }
 
     @Test
-    fun `If-Modified-Since header is sent only when given`() = runTest {
-        var receivedWithHeader: Boolean? = null
+    fun `conditional headers echo the given validators verbatim, each only when present`() = runTest {
+        var ifNoneMatch: String? = null
+        var ifModifiedSince: String? = null
         server.createContext("/conditional") { exchange ->
-            receivedWithHeader = exchange.requestHeaders.containsKey("If-Modified-Since")
-            exchange.sendResponseHeaders(200, 0)
-            exchange.responseBody.close()
+            ifNoneMatch = exchange.requestHeaders.getFirst("If-None-Match")
+            ifModifiedSince = exchange.requestHeaders.getFirst("If-Modified-Since")
+            exchange.sendResponseHeaders(304, -1)
+            exchange.close()
         }
+        val etag = "W/\"5f3c-abc\""
+        val lastModified = "Sat, 26 Sep 2026 10:00:00 GMT"
 
-        fetcher.fetch(url("/conditional"), 1_757_000_000_000L)
-        assertEquals(true, receivedWithHeader)
+        fetcher.fetch(url("/conditional"), CacheValidators(etag, lastModified))
+        assertEquals(etag, ifNoneMatch)
+        assertEquals(lastModified, ifModifiedSince)
+
+        fetcher.fetch(url("/conditional"), CacheValidators(etag, lastModified = null))
+        assertEquals(etag, ifNoneMatch)
+        assertNull(ifModifiedSince)
 
         fetcher.fetch(url("/conditional"), null)
-        assertEquals(false, receivedWithHeader)
+        assertNull(ifNoneMatch)
+        assertNull(ifModifiedSince)
     }
 
     @Test

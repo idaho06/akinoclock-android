@@ -20,7 +20,7 @@ class HttpUrlConnectionFetcher(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : HttpFetcher {
 
-    override suspend fun fetch(url: String, ifModifiedSinceMillis: Long?): FetchResult = withContext(ioDispatcher) {
+    override suspend fun fetch(url: String, validators: CacheValidators?): FetchResult = withContext(ioDispatcher) {
         try {
             val connection = URL(url).openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
@@ -30,7 +30,8 @@ class HttpUrlConnectionFetcher(
             connection.setRequestProperty("Accept", accept)
             connection.setRequestProperty("User-Agent", userAgent)
             connection.setRequestProperty("Accept-Encoding", "gzip")
-            if (ifModifiedSinceMillis != null) connection.ifModifiedSince = ifModifiedSinceMillis
+            validators?.etag?.let { connection.setRequestProperty("If-None-Match", it) }
+            validators?.lastModified?.let { connection.setRequestProperty("If-Modified-Since", it) }
 
             try {
                 when (val code = connection.responseCode) {
