@@ -218,4 +218,23 @@ class HeadlineCarouselViewTest {
 
         assertFalse(fake.isRunning)
     }
+
+    @Test
+    fun `reattaching to a window restarts the rotation unless paused`() {
+        val fake = FakePeriodicScheduler()
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val view = HeadlineCarouselView(activity, fake)
+        activity.setContentView(view)
+        view.setHeadlines(listOf(headline("h1"), headline("h2")))
+        val parent = view.parent as android.view.ViewGroup
+
+        parent.removeView(view)
+        parent.addView(view)
+        assertTrue(fake.isRunning)
+
+        view.pauseRotation()
+        parent.removeView(view)
+        parent.addView(view)
+        assertFalse(fake.isRunning)
+    }
 }

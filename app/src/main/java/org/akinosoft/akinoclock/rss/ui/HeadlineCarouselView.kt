@@ -20,7 +20,7 @@ import org.akinosoft.akinoclock.util.PeriodicScheduler
  * link. Rotation is driven by an injectable [scheduler] so tests can fire ticks deterministically
  * instead of waiting on a real clock — mirrors `ClockView`'s scheduler injection. Rotation is
  * suspended between [pauseRotation] and [resumeRotation] (driven by the host Activity's
- * `onStop`/`onStart`) and whenever the view is detached from its window.
+ * `onStop`/`onStart`) and while the view is detached from its window.
  */
 class HeadlineCarouselView @JvmOverloads constructor(
     context: Context,
@@ -97,6 +97,11 @@ class HeadlineCarouselView @JvmOverloads constructor(
     /** Restarts rotation for the current headlines, which an unchanged re-render would not do. */
     fun resumeRotation() {
         paused = false
+        startRotationIfNeeded()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         startRotationIfNeeded()
     }
 
