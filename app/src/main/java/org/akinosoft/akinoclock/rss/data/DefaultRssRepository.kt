@@ -94,7 +94,6 @@ class DefaultRssRepository(
                 true
             }
             FetchResult.NotModified -> {
-                cache.touch(feed.url)
                 markSuccess(feed.url)
                 true
             }

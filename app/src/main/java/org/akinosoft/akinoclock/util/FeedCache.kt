@@ -59,12 +59,6 @@ class FeedCache(
         validatorsFile(key).delete()
     }
 
-    /** Bumps a cached entry's mtime without rewriting its bytes, e.g. after a 304 response. */
-    fun touch(url: String) {
-        val file = bodyFile(keyFor(url))
-        if (file.isFile) file.setLastModified(nowMillis())
-    }
-
     /**
      * Returns the current cache file for [key], migrating a pre-`.cache`-extension file left
      * over from before FeedCache was shared between RSS and weather, if one is found.

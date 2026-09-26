@@ -91,31 +91,6 @@ class FeedCacheTest {
     }
 
     @Test
-    fun `touch bumps mtime without changing the cached bytes`() {
-        val dir = tempFolder.newFolder("rss-cache")
-        var currentMillis = 1_000L
-        val cache = FeedCache(dir) { currentMillis }
-        val url = "https://example.com/feed.xml"
-        cache.write(url, "original".toByteArray())
-
-        currentMillis = 5_000L
-        cache.touch(url)
-
-        val result = cache.read(url)
-        assertArrayEquals("original".toByteArray(), result?.bytes)
-        assertEquals(5_000L, result?.fetchedAtMillis)
-    }
-
-    @Test
-    fun `touch on an absent entry does nothing`() {
-        val cache = cache()
-
-        cache.touch("https://example.com/never-written.xml")
-
-        assertNull(cache.read("https://example.com/never-written.xml"))
-    }
-
-    @Test
     fun `clear deletes the cached file`() {
         val cache = cache()
         val url = "https://example.com/feed.xml"

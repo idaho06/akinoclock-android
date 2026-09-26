@@ -134,21 +134,18 @@ class DefaultRssRepositoryTest {
     }
 
     @Test
-    fun `stored validators are sent, and a 304 touches cache mtime, leaves headlines unchanged, counts as success`() = runTest {
+    fun `stored validators are sent, and a 304 leaves headlines unchanged and counts as success`() = runTest {
         val feed = FeedConfig(url = "https://example.com/feed.xml")
-        var currentMillis = 1_000L
-        val cache = FeedCache(tempFolder.newFolder("rss-cache")) { currentMillis }
+        val cache = cache()
         val validators = CacheValidators(etag = "\"v1\"", lastModified = "Sat, 26 Sep 2026 10:00:00 GMT")
         cache.write(feed.url, rss("Unchanged story"), validators)
         val fetcher = mockk<HttpFetcher>()
         coEvery { fetcher.fetch(feed.url, validators) } returns FetchResult.NotModified
         val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
 
-        currentMillis = 5_000L
         val outcome = repository.refresh(listOf(feed))
 
         assertEquals(RefreshOutcome.SUCCESS, outcome)
-        assertEquals(5_000L, cache.read(feed.url)?.fetchedAtMillis)
         assertEquals(listOf("Unchanged story"), repository.headlines().first().map { it.title })
     }
 
