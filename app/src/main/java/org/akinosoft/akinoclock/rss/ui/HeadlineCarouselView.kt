@@ -18,7 +18,9 @@ import org.akinosoft.akinoclock.util.PeriodicScheduler
  * One headline at a time, crossfading to the next every 8 s while more than one is configured.
  * Tap fires [onHeadlineClick] with whichever headline is currently shown, only when it has a
  * link. Rotation is driven by an injectable [scheduler] so tests can fire ticks deterministically
- * instead of waiting on a real clock — mirrors `ClockView`'s scheduler injection.
+ * instead of waiting on a real clock — mirrors `ClockView`'s scheduler injection. Rotation is
+ * suspended between [pauseRotation] and [resumeRotation] (driven by the host Activity's
+ * `onStop`/`onStart`) and whenever the view is detached from its window.
  */
 class HeadlineCarouselView @JvmOverloads constructor(
     context: Context,
@@ -45,6 +47,7 @@ class HeadlineCarouselView @JvmOverloads constructor(
     private var headlines: List<Headline> = emptyList()
     private var pendingIndex = 0
     private var stale = false
+    private var paused = false
 
     var visibleHeadline: Headline? = null
         private set
@@ -83,7 +86,27 @@ class HeadlineCarouselView @JvmOverloads constructor(
         frontChild.visibility = VISIBLE
         emptyStateView.visibility = GONE
         if (!hadContent) reveal(animate = false)
-        if (newHeadlines.size > 1) scheduler.start { reveal(animate = true) }
+        startRotationIfNeeded()
+    }
+
+    fun pauseRotation() {
+        paused = true
+        scheduler.stop()
+    }
+
+    /** Restarts rotation for the current headlines, which an unchanged re-render would not do. */
+    fun resumeRotation() {
+        paused = false
+        startRotationIfNeeded()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        scheduler.stop()
+    }
+
+    private fun startRotationIfNeeded() {
+        if (!paused && headlines.size > 1) scheduler.start { reveal(animate = true) }
     }
 
     /** Renders the whole carousel from a ViewModel state, mirroring `CalendarPanelView.render`. */

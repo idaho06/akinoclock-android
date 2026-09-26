@@ -1,5 +1,6 @@
 package org.akinosoft.akinoclock.rss.ui
 
+import android.app.Activity
 import android.content.Context
 import android.os.Looper
 import android.view.View
@@ -13,6 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 
@@ -150,5 +152,70 @@ class HeadlineCarouselViewTest {
         view.onHeadlineClick = { clicked = it }
         view.performClick()
         assertNull(clicked)
+    }
+
+    @Test
+    fun `pauseRotation stops a running rotation`() {
+        val fake = FakePeriodicScheduler()
+        val view = HeadlineCarouselView(context(), fake)
+        view.setHeadlines(listOf(headline("h1"), headline("h2")))
+
+        view.pauseRotation()
+
+        assertFalse(fake.isRunning)
+    }
+
+    @Test
+    fun `resumeRotation restarts rotation for the unchanged list`() {
+        val fake = FakePeriodicScheduler()
+        val view = HeadlineCarouselView(context(), fake)
+        val list = listOf(headline("h1"), headline("h2"))
+        view.setHeadlines(list)
+        view.pauseRotation()
+        view.setHeadlines(list.toList())
+
+        view.resumeRotation()
+
+        assertTrue(fake.isRunning)
+        fake.fireTick()
+        assertEquals("h2", visibleTitle(view))
+    }
+
+    @Test
+    fun `resumeRotation with a single headline does not start the scheduler`() {
+        val fake = FakePeriodicScheduler()
+        val view = HeadlineCarouselView(context(), fake)
+        view.setHeadlines(listOf(headline("only")))
+        view.pauseRotation()
+
+        view.resumeRotation()
+
+        assertFalse(fake.isRunning)
+    }
+
+    @Test
+    fun `setHeadlines while paused shows the first headline but does not start rotating`() {
+        val fake = FakePeriodicScheduler()
+        val view = HeadlineCarouselView(context(), fake)
+        view.pauseRotation()
+
+        view.setHeadlines(listOf(headline("h1"), headline("h2")))
+
+        assertEquals("h1", visibleTitle(view))
+        assertFalse(fake.isRunning)
+    }
+
+    @Test
+    fun `detaching from the window stops the rotation`() {
+        val fake = FakePeriodicScheduler()
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val view = HeadlineCarouselView(activity, fake)
+        activity.setContentView(view)
+        view.setHeadlines(listOf(headline("h1"), headline("h2")))
+        assertTrue(fake.isRunning)
+
+        (view.parent as android.view.ViewGroup).removeView(view)
+
+        assertFalse(fake.isRunning)
     }
 }
