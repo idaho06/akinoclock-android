@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.2
+
+Lower CPU, memory and data use on the always-on tablet.
+
+- The headline carousel pauses while the app is in the background and resumes when it returns.
+- Feeds are downloaded again only when they change: the app sends back the server's ETag and
+  Last-Modified values and accepts a "not modified" reply.
+- A burst of calendar sync notifications triggers a single reload, and the newest reload always
+  wins.
+- The clock dial is drawn once and reused, and only the hands redraw each second, using about
+  1 MB less memory.
+
 ## 1.1.1
 
 Small fixes and interactions on the weather strip and calendar.
