@@ -26,7 +26,7 @@ import org.akinosoft.akinoclock.util.SecondAlignedScheduler
 open class ClockView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-) : View(context, attrs) {
+) : SquareDialBase(context, attrs) {
 
     var clock: Clock = Clock.systemDefaultZone()
         set(value) {
@@ -101,9 +101,6 @@ open class ClockView @JvmOverloads constructor(
     private fun alarmAngleDeg(): Float? = AlarmHand.angleDeg(clock.instant(), nextAlarm, clock.zone)
 
     private var dialBitmap: Bitmap? = null
-    private var radius = 0f
-    private var centerX = 0f
-    private var centerY = 0f
 
     private val dialBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val bezelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
@@ -171,35 +168,9 @@ open class ClockView @JvmOverloads constructor(
         tickScheduler.stop()
     }
 
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val widthMode = MeasureSpec.getMode(widthMeasureSpec)
-        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
-        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
-        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
-
-        if (widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY) {
-            setMeasuredDimension(widthSize, heightSize)
-            return
-        }
-
-        if (widthMode == MeasureSpec.UNSPECIFIED && heightMode == MeasureSpec.UNSPECIFIED) {
-            val defaultSize = resources.getDimensionPixelSize(R.dimen.clock_default_size)
-            setMeasuredDimension(defaultSize, defaultSize)
-            return
-        }
-
-        val boundedWidth = if (widthMode == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else widthSize
-        val boundedHeight = if (heightMode == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else heightSize
-        val square = minOf(boundedWidth, boundedHeight)
-        setMeasuredDimension(square, square)
-    }
-
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         invalidateDialCache()
-        radius = minOf(w, h) / 2f
-        centerX = w / 2f
-        centerY = h / 2f
         dialBitmap = buildDialBitmap(w, h)
     }
 
