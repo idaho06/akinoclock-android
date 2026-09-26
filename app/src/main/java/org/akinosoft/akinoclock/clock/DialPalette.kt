@@ -4,7 +4,6 @@ import android.content.Context
 import org.akinosoft.akinoclock.R
 
 data class DialPalette(
-    val dialBackground: Int,
     val bezelRing: Int,
     val numeral: Int,
     val tickMinute: Int,
@@ -17,7 +16,6 @@ data class DialPalette(
 ) {
     companion object {
         fun fromResources(context: Context): DialPalette = DialPalette(
-            dialBackground = context.getColor(R.color.dial_background),
             bezelRing = context.getColor(R.color.bezel_ring),
             numeral = context.getColor(R.color.numeral),
             tickMinute = context.getColor(R.color.tick_minute),

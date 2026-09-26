@@ -118,21 +118,48 @@ class ClockViewTest {
 
     private fun luminance(color: Int): Int = Color.red(color) + Color.green(color) + Color.blue(color)
 
+    /** Background the window paints behind the dial and hands. */
+    private fun windowBackground(): Int = context().getColor(R.color.background)
+
+    /** A 200×200 bitmap pre-filled with [windowBackground], standing in for the window. */
+    private fun windowBitmap(): Bitmap =
+        Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888).apply { eraseColor(windowBackground()) }
+
     @Test
-    fun `dial renders background color and yellow second hand`() {
+    fun `draws no background, leaving the dial behind it visible`() {
         val view = TestableClockView(context(), fixedClock(12, 0, 15), FakePeriodicScheduler())
         view.layout(0, 0, 200, 200)
 
         val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        view.draw(canvas)
+        view.draw(Canvas(bitmap))
+
+        assertEquals(0, Color.alpha(bitmap.getPixel(90, 90)))
+        assertEquals(0, Color.alpha(bitmap.getPixel(2, 2)))
+    }
+
+    @Test
+    fun `draws a yellow second hand`() {
+        val view = TestableClockView(context(), fixedClock(12, 0, 15), FakePeriodicScheduler())
+        view.layout(0, 0, 200, 200)
+
+        val bitmap = windowBitmap()
+        view.draw(Canvas(bitmap))
 
         val palette = view.palette
-        assertEquals(palette.dialBackground, bitmap.getPixel(90, 90))
-
         val secondHandNeighborhood = (95..105).map { y -> bitmap.getPixel(160, y) }
         val closestMatch = secondHandNeighborhood.minByOrNull { colorDistance(it, palette.secondHand) }!!
-        assertTrue(colorDistance(closestMatch, palette.secondHand) < colorDistance(closestMatch, palette.dialBackground))
+        assertTrue(colorDistance(closestMatch, palette.secondHand) < colorDistance(closestMatch, windowBackground()))
+    }
+
+    @Test
+    fun `a new palette redraws exactly once`() {
+        val view = TestableClockView(context(), fixedClock(12, 0, 15), FakePeriodicScheduler())
+        view.layout(0, 0, 200, 200)
+        val before = view.invalidateCount
+
+        view.palette = view.palette.copy(secondHand = Color.RED)
+
+        assertEquals(before + 1, view.invalidateCount)
     }
 
     private fun colorDistance(a: Int, b: Int): Int {
@@ -169,12 +196,12 @@ class ClockViewTest {
         view.nextAlarm = LocalDateTime.of(2024, 1, 1, 6, 0, 0).toInstant(ZoneOffset.UTC)
         view.layout(0, 0, 200, 200)
 
-        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        val bitmap = windowBitmap()
         view.draw(Canvas(bitmap))
 
         val palette = view.palette
         val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.alarmTip)
-        assertTrue(colorDistance(closest, palette.alarmTip) < colorDistance(closest, palette.dialBackground))
+        assertTrue(colorDistance(closest, palette.alarmTip) < colorDistance(closest, windowBackground()))
     }
 
     @Test
@@ -184,12 +211,12 @@ class ClockViewTest {
         view.nextAlarm = LocalDateTime.of(2024, 1, 1, 18, 30, 0).toInstant(ZoneOffset.UTC)
         view.layout(0, 0, 200, 200)
 
-        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        val bitmap = windowBitmap()
         view.draw(Canvas(bitmap))
 
         val palette = view.palette
         val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.alarmTip)
-        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.alarmTip))
+        assertTrue(colorDistance(closest, windowBackground()) < colorDistance(closest, palette.alarmTip))
     }
 
     @Test
@@ -197,12 +224,12 @@ class ClockViewTest {
         val view = TestableClockView(context(), fixedClock(5, 0, 0), FakePeriodicScheduler())
         view.layout(0, 0, 200, 200)
 
-        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        val bitmap = windowBitmap()
         view.draw(Canvas(bitmap))
 
         val palette = view.palette
         val closest = closestInNeighborhood(bitmap, cx = 100, cy = 156, radius = 3, target = palette.alarmTip)
-        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.alarmTip))
+        assertTrue(colorDistance(closest, windowBackground()) < colorDistance(closest, palette.alarmTip))
     }
 
     @Test
@@ -219,21 +246,21 @@ class ClockViewTest {
         val pillX = 86
         val pillY = 154
 
-        var bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        var bitmap = windowBitmap()
         view.draw(Canvas(bitmap))
         var palette = view.palette
         var closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.alarmTip)
-        assertTrue(colorDistance(closest, palette.dialBackground) < colorDistance(closest, palette.alarmTip))
+        assertTrue(colorDistance(closest, windowBackground()) < colorDistance(closest, palette.alarmTip))
 
         // Advance to 08:00 (10.5h from the alarm), comfortably past the 12h boundary.
         clock.advanceTo(LocalDateTime.of(2024, 1, 1, 8, 0, 0).toInstant(ZoneOffset.UTC))
         fake.fireTick()
 
-        bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        bitmap = windowBitmap()
         view.draw(Canvas(bitmap))
         palette = view.palette
         closest = closestInNeighborhood(bitmap, pillX, pillY, radius = 3, target = palette.alarmTip)
-        assertTrue(colorDistance(closest, palette.alarmTip) < colorDistance(closest, palette.dialBackground))
+        assertTrue(colorDistance(closest, palette.alarmTip) < colorDistance(closest, windowBackground()))
     }
 
     @Test

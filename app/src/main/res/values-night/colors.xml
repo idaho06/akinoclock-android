@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Braun BC12 "BC12B" dark palette (default) -->
-    <color name="dial_background">#101010</color>
     <color name="bezel_ring">#2A2A2A</color>
     <color name="numeral">#EDEDED</color>
     <color name="tick_minute">#8A8A8A</color>

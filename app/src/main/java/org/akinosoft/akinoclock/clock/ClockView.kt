@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Handler
@@ -20,8 +19,8 @@ import org.akinosoft.akinoclock.util.PeriodicScheduler
 import org.akinosoft.akinoclock.util.SecondAlignedScheduler
 
 /**
- * Braun BC12-style analog clock: a cached dial (background, bezel, ticks, numerals) drawn once
- * per size change, with hour/minute/second hands redrawn on top once per second.
+ * Braun BC12-style analog clock hands (alarm, hour, minute, second and center cap), redrawn once
+ * per second on a transparent background over a [DialView] that holds the static dial.
  */
 open class ClockView @JvmOverloads constructor(
     context: Context,
@@ -45,7 +44,6 @@ open class ClockView @JvmOverloads constructor(
     var palette: DialPalette = DialPalette.fromResources(context)
         set(value) {
             field = value
-            invalidateDialCache()
             invalidate()
         }
 
@@ -100,12 +98,6 @@ open class ClockView @JvmOverloads constructor(
 
     private fun alarmAngleDeg(): Float? = AlarmHand.angleDeg(clock.instant(), nextAlarm, clock.zone)
 
-    private var dialBitmap: Bitmap? = null
-
-    private val dialBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val bezelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-    private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val numeralPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val handBatonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val handTipPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val alarmHandPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
@@ -168,60 +160,7 @@ open class ClockView @JvmOverloads constructor(
         tickScheduler.stop()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        invalidateDialCache()
-        dialBitmap = buildDialBitmap(w, h)
-    }
-
-    private fun invalidateDialCache() {
-        dialBitmap?.recycle()
-        dialBitmap = null
-    }
-
-    private fun buildDialBitmap(w: Int, h: Int): Bitmap {
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-
-        dialBackgroundPaint.color = palette.dialBackground
-        canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), dialBackgroundPaint)
-
-        bezelPaint.color = palette.bezelRing
-        bezelPaint.strokeWidth = 0.02f * radius
-        canvas.drawCircle(centerX, centerY, radius, bezelPaint)
-
-        tickPaint.color = palette.tickMinute
-        tickPaint.strokeWidth = 0.012f * radius
-        canvas.drawLines(toAbsolute(ClockGeometry.minorTickLines(radius)), tickPaint)
-
-        tickPaint.color = palette.numeral
-        tickPaint.strokeWidth = 0.02f * radius
-        canvas.drawLines(toAbsolute(ClockGeometry.hourTickLines(radius)), tickPaint)
-
-        numeralPaint.color = palette.numeral
-        numeralPaint.textSize = 0.16f * radius
-        val fontMetrics = numeralPaint.fontMetrics
-        val textBaselineOffset = (fontMetrics.ascent + fontMetrics.descent) / 2
-        for (hour in 1..12) {
-            val p = ClockGeometry.numeralCenter(hour, radius)
-            canvas.drawText(hour.toString(), centerX + p.x, centerY + p.y - textBaselineOffset, numeralPaint)
-        }
-
-        return bitmap
-    }
-
-    private fun toAbsolute(lines: FloatArray): FloatArray {
-        val absolute = FloatArray(lines.size)
-        for (i in lines.indices step 2) {
-            absolute[i] = lines[i] + centerX
-            absolute[i + 1] = lines[i + 1] + centerY
-        }
-        return absolute
-    }
-
     override fun onDraw(canvas: Canvas) {
-        dialBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
-
         alarmAngleDeg()?.let {
             drawTippedHand(canvas, HandKind.ALARM, it, alarmHandPaint, palette.alarmHand, palette.alarmTip)
         }
