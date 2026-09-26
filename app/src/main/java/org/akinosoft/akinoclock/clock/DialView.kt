@@ -23,8 +23,7 @@ open class DialView @JvmOverloads constructor(
         }
 
     private val bezelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-    private val minorTickPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val hourTickPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val numeralPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
 
     private var minorTickLines = FloatArray(0)
@@ -36,8 +35,6 @@ open class DialView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         bezelPaint.strokeWidth = 0.02f * radius
-        minorTickPaint.strokeWidth = 0.012f * radius
-        hourTickPaint.strokeWidth = 0.02f * radius
         minorTickLines = toAbsolute(ClockGeometry.minorTickLines(radius))
         hourTickLines = toAbsolute(ClockGeometry.hourTickLines(radius))
 
@@ -64,11 +61,13 @@ open class DialView @JvmOverloads constructor(
         bezelPaint.color = palette.bezelRing
         canvas.drawCircle(centerX, centerY, radius, bezelPaint)
 
-        minorTickPaint.color = palette.tickMinute
-        canvas.drawLines(minorTickLines, minorTickPaint)
+        tickPaint.color = palette.tickMinute
+        tickPaint.strokeWidth = 0.012f * radius
+        canvas.drawLines(minorTickLines, tickPaint)
 
-        hourTickPaint.color = palette.numeral
-        canvas.drawLines(hourTickLines, hourTickPaint)
+        tickPaint.color = palette.numeral
+        tickPaint.strokeWidth = 0.02f * radius
+        canvas.drawLines(hourTickLines, tickPaint)
 
         numeralPaint.color = palette.numeral
         for (i in 0 until 12) {
