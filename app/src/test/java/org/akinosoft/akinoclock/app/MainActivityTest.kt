@@ -191,6 +191,31 @@ class MainActivityTest {
         assertEquals(LinearLayout.HORIZONTAL, root.orientation)
     }
 
+    private fun assertDialSitsBehindClock(activity: MainActivity) {
+        val dial = activity.binding.dialView
+        val hands = activity.binding.clockView
+        val parent = hands.parent as android.view.ViewGroup
+        assertTrue(dial.parent === parent)
+        assertTrue(parent.indexOfChild(dial) < parent.indexOfChild(hands))
+    }
+
+    @Test
+    fun `the static dial sits behind the clock hands in portrait`() {
+        installFakeContainer()
+        val controller = Robolectric.buildActivity(MainActivity::class.java).create()
+
+        assertDialSitsBehindClock(controller.get())
+    }
+
+    @Test
+    @Config(qualifiers = "land")
+    fun `the static dial sits behind the clock hands in landscape`() {
+        installFakeContainer()
+        val controller = Robolectric.buildActivity(MainActivity::class.java).create()
+
+        assertDialSitsBehindClock(controller.get())
+    }
+
     @Test
     fun `recreating the activity does not throw and re-renders`() {
         installFakeContainer()

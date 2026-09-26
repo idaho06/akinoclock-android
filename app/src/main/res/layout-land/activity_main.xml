@@ -4,11 +4,21 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
 
-    <org.akinosoft.akinoclock.clock.ClockView
-        android:id="@+id/clockView"
+    <FrameLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <org.akinosoft.akinoclock.clock.DialView
+            android:id="@+id/dialView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <org.akinosoft.akinoclock.clock.ClockView
+            android:id="@+id/clockView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
