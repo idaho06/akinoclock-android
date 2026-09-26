@@ -22,19 +22,15 @@ class FeedCache(
 
     fun write(url: String, bytes: ByteArray, validators: CacheValidators? = null) {
         cacheDir.mkdirs()
-        val target = fileFor(url)
-        val tmp = File(cacheDir, "${target.name}.tmp")
-        tmp.writeBytes(bytes)
-        if (!tmp.renameTo(target)) {
-            tmp.delete()
-            throw IOException("failed to rename $tmp to $target")
-        }
+        val key = keyFor(url)
+        val target = bodyFile(key)
+        writeAtomically(target, bytes)
         target.setLastModified(nowMillis())
-        writeValidators(url, validators)
+        writeValidators(key, validators)
     }
 
     fun readValidators(url: String): CacheValidators? {
-        val file = validatorsFileFor(url)
+        val file = validatorsFile(keyFor(url))
         if (!file.isFile) return null
         return try {
             val lines = file.readLines()
@@ -48,7 +44,7 @@ class FeedCache(
     }
 
     fun read(url: String): CachedFeed? {
-        val file = migrateLegacyFileIfPresent(url)
+        val file = migrateLegacyFileIfPresent(keyFor(url))
         if (!file.isFile) return null
         return try {
             CachedFeed(file.readBytes(), file.lastModified())
@@ -58,44 +54,54 @@ class FeedCache(
     }
 
     fun clear(url: String) {
-        fileFor(url).delete()
-        validatorsFileFor(url).delete()
+        val key = keyFor(url)
+        bodyFile(key).delete()
+        validatorsFile(key).delete()
     }
 
     /** Bumps a cached entry's mtime without rewriting its bytes, e.g. after a 304 response. */
     fun touch(url: String) {
-        val file = fileFor(url)
+        val file = bodyFile(keyFor(url))
         if (file.isFile) file.setLastModified(nowMillis())
     }
 
     /**
-     * Returns the current cache file for [url], migrating a pre-`.cache`-extension file left
+     * Returns the current cache file for [key], migrating a pre-`.cache`-extension file left
      * over from before FeedCache was shared between RSS and weather, if one is found.
      */
-    private fun migrateLegacyFileIfPresent(url: String): File {
-        val file = fileFor(url)
+    private fun migrateLegacyFileIfPresent(key: String): File {
+        val file = bodyFile(key)
         if (file.isFile) return file
-        val legacyFile = File(cacheDir, "${sha1Hex(url)}.xml")
+        val legacyFile = File(cacheDir, "$key.xml")
         if (!legacyFile.isFile) return file
         return if (legacyFile.renameTo(file)) file else legacyFile
     }
 
     /** One header value per line (empty when absent); header values never contain newlines. */
-    private fun writeValidators(url: String, validators: CacheValidators?) {
-        val file = validatorsFileFor(url)
-        if (validators == null || (validators.etag == null && validators.lastModified == null)) {
+    private fun writeValidators(key: String, validators: CacheValidators?) {
+        val file = validatorsFile(key)
+        if (validators == null) {
             file.delete()
             return
         }
-        file.writeText("${validators.etag.orEmpty()}\n${validators.lastModified.orEmpty()}\n")
+        writeAtomically(file, "${validators.etag.orEmpty()}\n${validators.lastModified.orEmpty()}\n".toByteArray())
     }
 
-    private fun fileFor(url: String) = File(cacheDir, "${sha1Hex(url)}.cache")
+    private fun writeAtomically(target: File, bytes: ByteArray) {
+        val tmp = File(cacheDir, "${target.name}.tmp")
+        tmp.writeBytes(bytes)
+        if (!tmp.renameTo(target)) {
+            tmp.delete()
+            throw IOException("failed to rename $tmp to $target")
+        }
+    }
 
-    private fun validatorsFileFor(url: String) = File(cacheDir, "${sha1Hex(url)}.meta")
+    private fun bodyFile(key: String) = File(cacheDir, "$key.cache")
 
-    private fun sha1Hex(text: String): String {
-        val digest = MessageDigest.getInstance("SHA-1").digest(text.toByteArray())
+    private fun validatorsFile(key: String) = File(cacheDir, "$key.meta")
+
+    private fun keyFor(url: String): String {
+        val digest = MessageDigest.getInstance("SHA-1").digest(url.toByteArray())
         return digest.joinToString("") { "%02x".format(it) }
     }
 }
