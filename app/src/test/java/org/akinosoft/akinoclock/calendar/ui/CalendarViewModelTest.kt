@@ -123,6 +123,37 @@ class CalendarViewModelTest {
     }
 
     @Test
+    fun `a newer refresh wins over a slower in-flight load`() = runViewModelTest {
+        var calls = 0
+        val repository = mockk<CalendarRepository> {
+            coEvery { instancesBetween(any(), any()) } coAnswers {
+                if (++calls == 1) {
+                    delay(100)
+                    listOf(allDayInstance)
+                } else {
+                    emptyList()
+                }
+            }
+            every { changes() } returns emptyFlow()
+        }
+        val permissionChecker = mockk<PermissionChecker> { every { hasReadCalendar() } returns true }
+
+        val viewModel = CalendarViewModel(
+            repository, permissionChecker, clockAt(LocalDate.of(2026, 9, 25)),
+            ioDispatcher = StandardTestDispatcher(testScheduler),
+        )
+        viewModel.start()
+        runCurrent()
+
+        viewModel.refresh()
+        advanceTimeBy(200)
+        runCurrent()
+
+        val granted = viewModel.uiState.value as CalendarUiState.Granted
+        assertFalse(granted.grid.cells.first { it.date == LocalDate.of(2026, 9, 26) }.hasEvents)
+    }
+
+    @Test
     fun `a changes emission re-queries the repository`() = runViewModelTest {
         val changes = MutableSharedFlow<Unit>()
         val repository = mockk<CalendarRepository> {

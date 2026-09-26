@@ -47,6 +47,7 @@ class CalendarViewModel(
 
     private var changesJob: Job? = null
     private var midnightJob: Job? = null
+    private var loadJob: Job? = null
 
     fun start() {
         if (changesJob?.isActive != true) {
@@ -83,8 +84,10 @@ class CalendarViewModel(
         return Duration.between(now, nextMidnight).toMillis()
     }
 
+    /** Cancels any load still in flight, so an older query can never overwrite a newer result. */
     fun refresh() {
-        viewModelScope.launch { load() }
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch { load() }
     }
 
     private suspend fun load() {
