@@ -128,7 +128,6 @@ open class ClockView @JvmOverloads constructor(
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_TIME_CHANGED)
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
-            addAction(Intent.ACTION_TIME_TICK)
         }
         context.registerReceiver(timeChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         if (visibility == VISIBLE) start()

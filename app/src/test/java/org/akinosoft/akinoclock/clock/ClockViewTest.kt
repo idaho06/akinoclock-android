@@ -326,6 +326,23 @@ class ClockViewTest {
     }
 
     @Test
+    fun `the minute time-tick broadcast neither updates time nor redraws, the second tick covers it`() {
+        val fake = FakePeriodicScheduler()
+        val clock = mutableClock(8, 0, 0)
+        val view = TestableClockView(context(), clock, fake)
+        val controller = attachToActivity(view)
+        shadowOf(Looper.getMainLooper()).idle()
+        val invalidatesBefore = view.invalidateCount
+
+        clock.advanceTo(LocalDateTime.of(2024, 1, 1, 8, 1, 0).toInstant(ZoneOffset.UTC))
+        controller.get().sendBroadcast(Intent(Intent.ACTION_TIME_TICK))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(ClockTime(8, 0, 0), view.time)
+        assertEquals(invalidatesBefore, view.invalidateCount)
+    }
+
+    @Test
     fun `measure passes through when both dimensions are EXACTLY`() {
         val view = TestableClockView(context(), fixedClock(0, 0, 0), FakePeriodicScheduler())
         view.measure(
