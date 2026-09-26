@@ -68,7 +68,7 @@ class DefaultRssRepositoryTest {
         val cache = cache()
         val fetcher = mockk<HttpFetcher>()
         val bytes = rss("Fresh story")
-        coEvery { fetcher.fetch(feed.url, null) } returns FetchResult.Success(bytes, lastModifiedMillis = null)
+        coEvery { fetcher.fetch(feed.url, null) } returns FetchResult.Success(bytes, validators = null)
         val repository = DefaultRssRepository(listOf(feed), fetcher, cache, fixedClock)
 
         val outcome = repository.refresh(listOf(feed))

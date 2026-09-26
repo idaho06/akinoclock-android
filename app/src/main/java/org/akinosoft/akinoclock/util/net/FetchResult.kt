@@ -1,7 +1,7 @@
 package org.akinosoft.akinoclock.util.net
 
 sealed class FetchResult {
-    data class Success(val bytes: ByteArray, val lastModifiedMillis: Long?) : FetchResult()
+    data class Success(val bytes: ByteArray, val validators: CacheValidators?) : FetchResult()
     data object NotModified : FetchResult()
     data class Failure(val reason: Reason) : FetchResult() {
         sealed class Reason {

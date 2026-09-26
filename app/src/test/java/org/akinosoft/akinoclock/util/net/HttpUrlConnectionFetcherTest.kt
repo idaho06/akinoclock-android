@@ -10,6 +10,7 @@ import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -117,6 +118,26 @@ class HttpUrlConnectionFetcherTest {
         val result = fetcher.fetch(url("/huge"), null)
 
         assertEquals(FetchResult.Failure(FetchResult.Failure.Reason.TooLarge), result)
+    }
+
+    @Test
+    fun `Success carries the ETag and Last-Modified headers verbatim`() = runTest {
+        val etag = "W/\"5f3c-abc\""
+        val lastModified = "Sat, 26 Sep 2026 10:00:00 GMT"
+        serve("/validated", 200, "<rss/>".toByteArray(), headers = mapOf("ETag" to etag, "Last-Modified" to lastModified))
+
+        val result = fetcher.fetch(url("/validated"), null) as FetchResult.Success
+
+        assertEquals(CacheValidators(etag = etag, lastModified = lastModified), result.validators)
+    }
+
+    @Test
+    fun `Success without validator headers carries no validators`() = runTest {
+        serve("/plain", 200, "<rss/>".toByteArray())
+
+        val result = fetcher.fetch(url("/plain"), null) as FetchResult.Success
+
+        assertNull(result.validators)
     }
 
     @Test

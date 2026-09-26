@@ -69,8 +69,13 @@ class HttpUrlConnectionFetcher(
                 buffer.write(chunk, 0, read)
             }
         }
-        val lastModified = connection.getHeaderFieldDate("Last-Modified", -1L).takeIf { it > 0 }
-        return FetchResult.Success(buffer.toByteArray(), lastModified)
+        return FetchResult.Success(buffer.toByteArray(), readValidators(connection))
+    }
+
+    private fun readValidators(connection: HttpURLConnection): CacheValidators? {
+        val etag = connection.getHeaderField("ETag")
+        val lastModified = connection.getHeaderField("Last-Modified")
+        return if (etag == null && lastModified == null) null else CacheValidators(etag, lastModified)
     }
 
     companion object {
