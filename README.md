@@ -12,7 +12,7 @@ picked once in Settings via city search — no location permission, no Play Serv
 |---|---|
 | ![Dark theme](docs/screenshots/main-dark.png) | ![Light theme](docs/screenshots/main-light.png) |
 
-Feeds, theme and refresh are configured from an in-app settings screen:
+Feeds, weather location, theme and refresh are configured from an in-app settings screen:
 
 ![Settings screen](docs/screenshots/settings.png)
 
@@ -22,7 +22,7 @@ Feeds, theme and refresh are configured from an in-app settings screen:
 ./gradlew test                                  # all JVM unit tests (JUnit + Robolectric)
 ./gradlew assembleDebug                         # build the debug APK
 ./gradlew installDebug                          # install on the connected device
-adb shell am start -n org.akinosoft.akinoclock.debug/.app.MainActivity
+adb shell am start -n org.akinosoft.akinoclock.debug/org.akinosoft.akinoclock.app.MainActivity
 ./gradlew connectedDebugAndroidTest             # instrumented tests (rare, on-device)
 ```
 
